@@ -34,7 +34,7 @@ end = struct
          0w0 => readStored ins
        | 0w1 => raise Fail "unimplemented"
        | 0w2 => raise Fail "unimplemented"
-       | 0w3 => raise Fail "invalid block type"
+       | _ => raise Fail "invalid block type"
   end
 
   fun input (buf as ref (v::vs), _) = (buf := vs; v)
