@@ -1,0 +1,5 @@
+$(SML_LIB)/basis/basis.mlb
+../bitio.sml
+../deflate.sml
+../example/inflate.sml
+../example/inflate-boot.sml
