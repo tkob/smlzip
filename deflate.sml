@@ -1,4 +1,4 @@
-structure Defalte :> sig
+structure Deflate :> sig
   type instream
   val fromBitInstream : BitIO.instream -> instream
   val fromBinInstream : BinIO.instream -> instream
