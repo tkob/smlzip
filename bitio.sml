@@ -5,17 +5,20 @@ structure BitIO :> sig
   val fromBytes : Word8Vector.vector -> instream
   val bits : instream * Word.word -> Word.word
   val inputN : instream * int -> Word8Vector.vector
+  val endOfStream : instream -> bool
 end = struct
 
   type fraction = { buf : Word.word, size : Word.word }
   type input1 = unit -> Word8.word option
   type inputN = int -> Word8Vector.vector
-  type instream = fraction ref * input1 * inputN
+  type endOfStream = unit -> bool
+  type instream = fraction ref * input1 * inputN * endOfStream
 
   fun fromBinInstream binins =
     (ref {buf = 0w0, size = 0w0},
     fn () => BinIO.input1 binins,
-    fn n => BinIO.inputN (binins, n))
+    fn n => BinIO.inputN (binins, n),
+    fn () => BinIO.endOfStream binins)
 
   fun fromBytes bytes =
   let
@@ -26,11 +29,12 @@ end = struct
         SOME (Word8Vector.sub (bytes, !pos))
         before pos := !pos + 1
     fun inputN n = raise Fail "unimplemented"
+    fun endOfStream () = !pos >= Word8Vector.length bytes
   in
-    (ref {buf = 0w0, size = 0w0}, input1, inputN)
+    (ref {buf = 0w0, size = 0w0}, input1, inputN, endOfStream)
   end
 
-  fun bits (ins as (frac as ref {buf, size}, input1, _), need) =
+  fun bits (ins as (frac as ref {buf, size}, input1, _, _), need) =
   let
     val fromWord8ToWord = Word.fromLarge o Word8.toLarge
     open Word
@@ -49,6 +53,10 @@ end = struct
              bits (ins, need))
   end
 
-  fun inputN (ins as (frac, _, inputN), n) =
+  fun inputN (ins as (frac, _, inputN, _), n) =
     (frac := {buf = 0w0, size = 0w0}; inputN n)
+
+  fun endOfStream ((ref {buf, size = 0w0}), _, _, endOfStream) = endOfStream ()
+    | endOfStream _ = false
+
 end

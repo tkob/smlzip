@@ -4,6 +4,7 @@ structure Defalte :> sig
   val fromBinInstream : BinIO.instream -> instream
   val fromBytes : Word8Vector.vector -> instream
   val input : instream -> Word8Vector.vector
+  val endOfStream : instream -> bool
 end = struct
   fun unpackInt vec =
     Word8Vector.foldr (fn (byte, int) => int * 0x100 + Word8.toInt byte) 0 vec
@@ -42,5 +43,8 @@ end = struct
 
   fun input (buf as ref (v::vs), _) = (buf := vs; v)
     | input (ins : instream) = (extend ins; input ins)
+
+  fun endOfStream (ref (_::_), _) = false
+    | endOfStream (ref [], bitins) = BitIO.endOfStream bitins
 
 end
