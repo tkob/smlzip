@@ -1,0 +1,18 @@
+# test for example/inflate
+
+proc test_inflate {test_name src_str level} {
+    set tempfile [file tempfile tempfilename]
+    fconfigure $tempfile -encoding binary
+    puts -nonewline $tempfile [zlib deflate $src_str $level]
+    close $tempfile
+    
+    spawn ../example/inflate $tempfilename
+    expect {
+      -ex $src_str {pass "$test_name passed.\n"}
+      eof          {fail "$test_name failed: expected \"$src_str\".\n"}
+    }
+    
+    file delete $tempfilename
+}
+
+test_inflate "Stored" "hello" 0
