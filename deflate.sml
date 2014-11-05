@@ -16,10 +16,13 @@ end = struct
   val fromBinInstream = fromBitInstream o BitIO.fromBinInstream
   val fromBytes = fromBitInstream o BitIO.fromBytes
 
+  val invert = Word8Vector.map Word8.notb
+
   fun readStored (buf as ref vs, bitins) =
   let
     val len = BitIO.inputN (bitins, 2)
     val nlen = BitIO.inputN (bitins, 2)
+    val _ = nlen = invert len orelse raise Fail "didn't match complement"
     val v = BitIO.inputN (bitins, unpackInt len)
   in
     buf := vs @ [v]
