@@ -29,7 +29,7 @@ end = struct
     buf := vs @ [v]
   end
 
-  fun extend (ins as (buf as ref (v::vs), bitins)) =
+  fun extend (ins as (buf, bitins)) =
   let
     val bfinal = BitIO.bits (bitins, 0w1)
     val btype = BitIO.bits (bitins, 0w1)
