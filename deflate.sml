@@ -11,9 +11,10 @@ end = struct
     Word8Vector.foldr (fn (byte, int) => int * 0x100 + Word8.toInt byte) 0 vec
 
   type buffer = Word8Vector.vector list
-  type instream = buffer ref * BitIO.instream
+  type instream = { buf : buffer ref,
+                    bitins : BitIO.instream }
 
-  fun fromBitInstream bitins : instream = (ref [], bitins)
+  fun fromBitInstream bitins : instream = {buf = ref [], bitins = bitins}
 
   val fromBinInstream = fromBitInstream o BitIO.fromBinInstream
   val fromBytes = fromBitInstream o BitIO.fromBytes
@@ -21,7 +22,7 @@ end = struct
   val invert = Word8Vector.map Word8.notb
 
   (* 3.2.4. Non-compressed blocks (BTYPE=00) *)
-  fun readStored (buf as ref vs, bitins) =
+  fun readStored {buf as ref vs, bitins} =
         let
           (* using inputN effectively skips remaining bits *)
           val len = BitIO.inputN (bitins, 2)
@@ -33,7 +34,7 @@ end = struct
         end
 
   (* 3.2.3. Details of block format *)
-  fun extend (ins as (buf, bitins)) =
+  fun extend (ins as {buf, bitins}) =
         let
           (* first bit       BFINAL *)
           val bfinal = BitIO.bits (bitins, 0w1)
@@ -51,10 +52,10 @@ end = struct
              | _ => raise Fail "invalid block type"
         end
 
-  fun input (buf as ref (v::vs), _) = (buf := vs; v)
+  fun input {buf as ref (v::vs), ...} = (buf := vs; v)
     | input (ins : instream) = (extend ins; input ins)
 
-  fun endOfStream (ref (_::_), _) = false
-    | endOfStream (ref [], bitins) = BitIO.endOfStream bitins
+  fun endOfStream {buf as ref (_::_), ...} = false
+    | endOfStream {buf as ref [], bitins} = BitIO.endOfStream bitins
 
 end
