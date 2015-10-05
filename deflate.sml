@@ -52,6 +52,14 @@ end = struct
              | _ => raise Fail "invalid block type"
         end
 
+  (* 3.2.6. Compression with fixed Huffman codes (BTYPE=01) *)
+  fun lenFixed code =
+        if code < 144 then 8
+        else if code < 256 then 9
+        else if code < 280 then 7
+        else if code < 288 then 8
+        else raise Fail "undefined code"
+
   fun input {buf as ref (v::vs), ...} = (buf := vs; v)
     | input (ins : instream) = (extend ins; input ins)
 
