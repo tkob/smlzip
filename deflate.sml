@@ -68,6 +68,22 @@ end = struct
         else if code < 288 then 8
         else raise Fail "undefined code"
 
+  (* 3.2.2. Use of Huffman coding in the "deflate" format *)
+  fun construct (lenf, maxbits, maxcode) =
+        let
+          (* 1)  Count the number of codes for each code length.  Let
+                 bl_count[N] be the number of codes of length N, N >= 1. *)
+          val blCount (* length -> count *) = Array.array (maxbits + 1, 0)
+          fun makeBlCount code =
+                if code > maxcode then ()
+                else (
+                  incrArrayElem (blCount, lenf code);
+                  makeBlCount (code + 1))
+          val _ = makeBlCount 0
+        in
+          blCount
+        end
+
   fun input {buf as ref (v::vs), ...} = (buf := vs; v)
     | input (ins : instream) = (extend ins; input ins)
 
