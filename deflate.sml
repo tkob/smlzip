@@ -52,6 +52,14 @@ end = struct
              | _ => raise Fail "invalid block type"
         end
 
+  fun incrArrayElem (arr, i) =
+        let
+          val old = Array.sub (arr, i)
+          val new = old + 1
+        in
+          Array.update (arr, i, new)
+        end
+
   (* 3.2.6. Compression with fixed Huffman codes (BTYPE=01) *)
   fun lenFixed code =
         if code < 144 then 8
