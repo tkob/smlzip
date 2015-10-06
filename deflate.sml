@@ -6,6 +6,7 @@ structure Deflate :> sig
   val fromBytes : Word8Vector.vector -> instream
   val input : instream -> Word8Vector.vector
   val endOfStream : instream -> bool
+  val construct : int array -> int array
 end = struct
   fun unpackInt vec =
     Word8Vector.foldr (fn (byte, int) => int * 0x100 + Word8.toInt byte) 0 vec
@@ -76,19 +77,60 @@ end = struct
         end
 
   (* 3.2.2. Use of Huffman coding in the "deflate" format *)
-  fun construct (lenf, maxbits, maxcode) =
+  fun construct lengths =
         let
+          val numAlphabets = Array.length lengths
+          val maxAlphabet = numAlphabets - 1
+          val maxBits = Array.foldr max 0 lengths
           (* 1)  Count the number of codes for each code length.  Let
                  bl_count[N] be the number of codes of length N, N >= 1. *)
-          val blCount (* length -> count *) = Array.array (maxbits + 1, 0)
-          fun makeBlCount code =
-                if code > maxcode then ()
+          val blCount (* length -> count *) = Array.array (maxBits + 1, 0)
+          fun makeBlCount alphabet =
+                if alphabet > maxAlphabet then ()
                 else (
-                  incrArrayElem (blCount, lenf code);
-                  makeBlCount (code + 1))
+                  incrArrayElem (blCount, Array.sub (lengths, alphabet));
+                  makeBlCount (alphabet + 1))
           val _ = makeBlCount 0
+          (* 2)  Find the numerical value of the smallest code for each
+                 code length *)
+          val nextCode (* length -> code *) = Array.array (maxBits + 1, 0)
+          fun makeNextCode bits =
+                if bits >= maxBits then ()
+                else
+                  let
+                    (* the smallest code for this length *)
+                    val this = Array.sub (nextCode, bits)
+                    (* the number of codes of this length *)
+                    val count = Array.sub (blCount, bits)
+                    (* the smallest code for next length *)
+                    val next = (this + count) * 2
+                  in
+                    Array.update (nextCode, bits + 1, next);
+                    makeNextCode (bits + 1)
+                  end
+          val _ = makeNextCode 0
+          (* 3)  Assign numerical values to all codes, using consecutive
+                 values for all codes of the same length with the base
+                 values determined at step 2. Codes that are never used
+                 (which have a bit length of zero) must not be assigned a
+                 value. *)
+          val codes (* alphabet -> code *) = Array.array (numAlphabets, 0)
+          fun makeCode alphabet =
+                if alphabet > maxAlphabet then ()
+                else
+                  let
+                    val len = Array.sub (lengths, alphabet)
+                    val code = Array.sub (nextCode, len)
+                  in
+                    if len <> 0 then (
+                      Array.update (codes, alphabet, code);
+                      incrArrayElem (nextCode, len))
+                    else ();
+                    makeCode (alphabet + 1)
+                  end
+          val _ = makeCode 0
         in
-          blCount
+          codes
         end
 
   fun input {buf as ref (v::vs), ...} = (buf := vs; v)
