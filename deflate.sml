@@ -60,6 +60,8 @@ end = struct
           Array.update (arr, i, new)
         end
 
+  fun max (a, b) = if a > b then a else b
+
   (* 3.2.6. Compression with fixed Huffman codes (BTYPE=01) *)
   val lenFixed =
         let
