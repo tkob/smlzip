@@ -1,11 +1,26 @@
 structure Word8Buffer :> sig
   type t
   val create : int -> t
+  val put : t * Word8Array.array -> unit
+  val putVec : t * Word8Vector.vector -> unit
   val get : t * int -> Word8Array.array
 end = struct
   type t = { buffer : Word8Array.array, p : int ref }
 
   fun create size = { buffer = Word8Array.array (size, 0w0), p = ref 0 }
+
+  fun put' app ({buffer, p}, arr) =
+        let
+          val bufferLen = Word8Array.length buffer
+          fun putByte byte = (
+                Word8Array.update (buffer, !p, byte);
+                p := (!p + 1) mod bufferLen)
+        in
+          app putByte arr
+        end
+
+  val put = put' Word8Array.app;
+  val putVec = put' Word8Vector.app;
 
   fun get ({buffer, p = ref p}, size) =
         let
