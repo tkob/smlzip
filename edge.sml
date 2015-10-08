@@ -6,6 +6,8 @@ structure Edge :> sig
   val isDeadEnd : edges -> bool
   val fromList : edge list -> edges
   val toList : edges -> edge list
+  val fromWordAndLength : Word.word * int -> edges
+  val toWordAndLength : edges -> Word.word * int
 end = struct
   datatype edge = Zero | One
   type edges = Word.word * int
@@ -42,4 +44,6 @@ end = struct
         in
           edge::toList (ahead edges)
         end
+  fun fromWordAndLength x = x
+  fun toWordAndLength x = x
 end
