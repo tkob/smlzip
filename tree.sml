@@ -26,6 +26,11 @@ structure Tree = struct
              Edge.Zero => follow (zero, Edge.ahead edges)
            | Edge.One => follow (one, Edge.ahead edges)
 
+  fun zero (Leaf _) = raise Fail "leaf"
+    | zero (Node (zero, _)) = zero
+  fun one (Leaf _) = raise Fail "leaf"
+    | one (Node (_, one)) = one
+
   fun show toString (Leaf value) = toString value
     | show toString (Node (zero, one)) =
         "(" ^ show toString zero ^ ", " ^ show toString one ^ ")"
