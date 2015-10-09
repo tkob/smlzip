@@ -6,7 +6,7 @@ structure Deflate :> sig
   val fromBytes : Word8Vector.vector -> instream
   val input : instream -> Word8Vector.vector
   val endOfStream : instream -> bool
-  val construct : int array -> int array
+  val construct : int array -> int Tree.t
 end = struct
   fun unpackInt vec =
     Word8Vector.foldr (fn (byte, int) => int * 0x100 + Word8.toInt byte) 0 vec
@@ -129,8 +129,19 @@ end = struct
                     makeCode (alphabet + 1)
                   end
           val _ = makeCode 0
+          val paths =
+            Array.foldri
+              (fn (alphabet, length, b) =>
+                let
+                  val code = Word.fromInt (Array.sub (codes, alphabet))
+                  val edges = Edge.fromWordAndLength (code, length)
+                in
+                  (edges, alphabet)::b
+                end)
+              []
+              lengths
         in
-          codes
+          Tree.make paths
         end
 
   fun input {buf as ref (v::vs), ...} = (buf := vs; v)
