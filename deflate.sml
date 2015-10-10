@@ -155,7 +155,7 @@ end = struct
           (* first bit       BFINAL *)
           val bfinal = BitIO.bits (bitins, 0w1)
           (* next 2 bits     BTYPE *)
-          val btype = BitIO.bits (bitins, 0w1)
+          val btype = BitIO.bits (bitins, 0w2)
         in
           case btype of
                (* 00 - no compression *)
