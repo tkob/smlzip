@@ -7,6 +7,7 @@ structure Deflate :> sig
   val input : instream -> Word8Vector.vector
   val endOfStream : instream -> bool
   val construct : int array -> int Tree.t
+  val fixed : int Tree.t
 end = struct
   fun unpackInt vec =
     Word8Vector.foldr (fn (byte, int) => int * 0x100 + Word8.toInt byte) 0 vec
@@ -62,19 +63,6 @@ end = struct
         end
 
   fun max (a, b) = if a > b then a else b
-
-  (* 3.2.6. Compression with fixed Huffman codes (BTYPE=01) *)
-  val lenFixed =
-        let
-          fun f code =
-            if code < 144 then 8
-            else if code < 256 then 9
-            else if code < 280 then 7
-            else if code < 288 then 8
-            else raise Fail "undefined code"
-        in
-          Array.tabulate (288, f)
-        end
 
   (* 3.2.2. Use of Huffman coding in the "deflate" format *)
   fun construct lengths =
@@ -143,6 +131,20 @@ end = struct
         in
           Tree.make paths
         end
+
+  (* 3.2.6. Compression with fixed Huffman codes (BTYPE=01) *)
+  val fixed =
+        let
+          fun f code =
+            if code < 144 then 8
+            else if code < 256 then 9
+            else if code < 280 then 7
+            else if code < 288 then 8
+            else raise Fail "undefined code"
+        in
+          construct (Array.tabulate (288, f))
+        end
+
 
   fun input {buf as ref (v::vs), ...} = (buf := vs; v)
     | input (ins : instream) = (extend ins; input ins)
