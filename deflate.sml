@@ -139,14 +139,33 @@ end = struct
 
   fun readCompressed huffman (ins as {buf as ref vs, bitins}) =
         let
-          val value = readLiteral huffman ins
+          val segmentSize = 256
+          val segment = Word8Array.array (segmentSize, 0w0)
+          fun read index segments =
+                let
+                  val value = readLiteral huffman ins
+                in
+                  if value < 0x100 then (
+                    Word8Array.update (segment, index, Word8.fromInt value);
+                    if index + 1 >= segmentSize then
+                      read 0 (Word8Array.vector segment::segments)
+                    else
+                      read (index + 1) segments)
+                  else if value = 0x100 then
+                    let
+                      open Word8ArraySlice
+                      val segments' =
+                        if index = 0 then segments
+                        else
+                          (vector (slice (segment, 0, SOME index)))::segments
+                    in
+                      buf := vs @ rev segments'
+                    end
+                  else
+                    raise Fail "unimplemented >0x100"
+                end
         in
-          if value < 0x100 then
-            buf := vs @ [Word8Vector.tabulate (1, fn i => Word8.fromInt value)];
-          else if value = 0x100 then
-            raise Fail "unimplemented 0x100"
-          else
-            raise Fail "unimplemented >0x100"
+          read 0 []
         end
 
   (* 3.2.3. Details of block format *)
