@@ -15,9 +15,15 @@ end = struct
 
   type buffer = Word8Vector.vector list
   type instream = { buf : buffer ref,
-                    bitins : BitIO.instream }
+                    bitins : BitIO.instream,
+                    prev : Word8RingBuffer.t }
 
-  fun fromBitInstream bitins : instream = {buf = ref [], bitins = bitins}
+  fun fromBitInstream bitins : instream =
+        { buf = ref [],
+          bitins = bitins,
+          (* the LZ77 algorithm may use a reference to a duplicated string
+             occurring in a previous block, up to 32K input bytes before. *)
+          prev = Word8RingBuffer.create 32768 }
 
   val fromBinInstream = fromBitInstream o BitIO.fromBinInstream
   val fromBytes = fromBitInstream o BitIO.fromBytes
@@ -116,7 +122,7 @@ end = struct
         end
 
   (* 3.2.4. Non-compressed blocks (BTYPE=00) *)
-  fun readStored {buf as ref vs, bitins} =
+  fun readStored {buf as ref vs, bitins, ...} =
         let
           (* using inputN effectively skips remaining bits *)
           val len = BitIO.inputN (bitins, 2)
@@ -137,7 +143,7 @@ end = struct
           else readLiteral one bitins
         end
 
-  fun readCompressed huffman (ins as {buf as ref vs, bitins}) =
+  fun readCompressed huffman (ins as {buf as ref vs, bitins, prev}) =
         let
           val segmentSize = 256
           val segment = Word8Array.array (segmentSize, 0w0)
@@ -147,6 +153,7 @@ end = struct
                 in
                   if value < 0x100 then (
                     Word8Array.update (segment, index, Word8.fromInt value);
+                    Word8RingBuffer.putElem (prev, Word8.fromInt value);
                     if index + 1 >= segmentSize then
                       read 0 (Word8Array.vector segment::segments)
                     else
@@ -169,7 +176,7 @@ end = struct
         end
 
   (* 3.2.3. Details of block format *)
-  fun extend (ins as {buf, bitins}) =
+  fun extend (ins as {buf, bitins, ...}) =
         let
           (* first bit       BFINAL *)
           val bfinal = BitIO.bits (bitins, 0w1)
@@ -192,6 +199,6 @@ end = struct
     | input (ins : instream) = (extend ins; input ins)
 
   fun endOfStream {buf as ref (_::_), ...} = false
-    | endOfStream {buf as ref [], bitins} = BitIO.endOfStream bitins
+    | endOfStream {buf as ref [], bitins, ...} = BitIO.endOfStream bitins
 
 end
