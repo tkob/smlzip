@@ -10,9 +10,6 @@ structure Deflate :> sig
   val fixed : int Tree.t
   val readLiteral : int Tree.t -> BitIO.instream -> int
 end = struct
-  fun unpackInt vec =
-    Word8Vector.foldr (fn (byte, int) => int * 0x100 + Word8.toInt byte) 0 vec
-
   type buffer = Word8Vector.vector list
   type instream = { buf : buffer ref,
                     bitins : BitIO.instream,
@@ -124,6 +121,11 @@ end = struct
   (* 3.2.4. Non-compressed blocks (BTYPE=00) *)
   fun readStored {buf as ref vs, bitins, ...} =
         let
+          fun unpackInt vec =
+                Word8Vector.foldr
+                  (fn (byte, int) => int * 0x100 + Word8.toInt byte)
+                  0
+                  vec
           (* using inputN effectively skips remaining bits *)
           val len = BitIO.inputN (bitins, 2)
           val nlen = BitIO.inputN (bitins, 2)
