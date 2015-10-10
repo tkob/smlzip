@@ -5,8 +5,8 @@ structure Word8RingBuffer :> sig
   val putVec : t * Word8Vector.vector -> unit
   val putElem : t * Word8.word -> unit
 
-  (* last (t, sz): returns last sz bytes of the buffer *)
-  val last : t * int -> Word8Array.array
+  (* prev (t, sz): returns last sz bytes of the buffer *)
+  val prev : t * int -> Word8Array.array
 end = struct
   type t = { buffer : Word8Array.array, p : int ref }
 
@@ -26,7 +26,7 @@ end = struct
   val putVec = put' Word8Vector.app;
   val putElem = put' (fn f => fn x => f x)
 
-  fun last ({buffer, p = ref p}, size) =
+  fun prev ({buffer, p = ref p}, size) =
         let
           val dest = Word8Array.array (size, 0w00)
           fun copy (_, 0) = ()
