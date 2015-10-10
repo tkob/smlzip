@@ -8,6 +8,7 @@ structure Deflate :> sig
   val endOfStream : instream -> bool
   val construct : int array -> int Tree.t
   val fixed : int Tree.t
+  val readLiteral : int Tree.t -> instream -> int
 end = struct
   fun unpackInt vec =
     Word8Vector.foldr (fn (byte, int) => int * 0x100 + Word8.toInt byte) 0 vec
@@ -22,37 +23,6 @@ end = struct
   val fromBytes = fromBitInstream o BitIO.fromBytes
 
   val invert = Word8Vector.map Word8.notb
-
-  (* 3.2.4. Non-compressed blocks (BTYPE=00) *)
-  fun readStored {buf as ref vs, bitins} =
-        let
-          (* using inputN effectively skips remaining bits *)
-          val len = BitIO.inputN (bitins, 2)
-          val nlen = BitIO.inputN (bitins, 2)
-          val _ = nlen = invert len orelse raise Fail "didn't match complement"
-          val v = BitIO.inputN (bitins, unpackInt len)
-        in
-          buf := vs @ [v]
-        end
-
-  (* 3.2.3. Details of block format *)
-  fun extend (ins as {buf, bitins}) =
-        let
-          (* first bit       BFINAL *)
-          val bfinal = BitIO.bits (bitins, 0w1)
-          (* next 2 bits     BTYPE *)
-          val btype = BitIO.bits (bitins, 0w1)
-        in
-          case btype of
-               (* 00 - no compression *)
-               0w0 => readStored ins
-               (* 01 - compressed with fixed Huffman codes *)
-             | 0w1 => raise Fail "unimplemented"
-               (* 10 - compressed with dynamic Huffman codes *)
-             | 0w2 => raise Fail "unimplemented"
-               (* 11 - reserved (error) *)
-             | _ => raise Fail "invalid block type"
-        end
 
   fun incrArrayElem (arr, i) =
         let
@@ -145,6 +115,59 @@ end = struct
           construct (Array.tabulate (288, f))
         end
 
+  (* 3.2.4. Non-compressed blocks (BTYPE=00) *)
+  fun readStored {buf as ref vs, bitins} =
+        let
+          (* using inputN effectively skips remaining bits *)
+          val len = BitIO.inputN (bitins, 2)
+          val nlen = BitIO.inputN (bitins, 2)
+          val _ = nlen = invert len orelse raise Fail "didn't match complement"
+          val v = BitIO.inputN (bitins, unpackInt len)
+        in
+          buf := vs @ [v]
+        end
+
+  (* decode literal/length value from input stream *)
+  fun readLiteral (Tree.Leaf value) _ = value
+    | readLiteral (Tree.Node (zero, one)) (ins as {buf as ref vs, bitins}) =
+        let
+          val bit = BitIO.bits (bitins, 0w1)
+        in
+          if bit = 0w0 then readLiteral zero ins
+          else readLiteral one ins
+        end
+
+  fun readCompressed huffman (ins as {buf as ref vs, bitins}) =
+        let
+          val value = readLiteral huffman ins
+        in
+          if value < 0x100 then
+            buf := vs @ [Word8Vector.tabulate (1, fn i => Word8.fromInt value)];
+          else if value = 0x100 then
+            raise Fail "unimplemented 0x100"
+          else
+            raise Fail "unimplemented >0x100"
+        end
+
+  (* 3.2.3. Details of block format *)
+  fun extend (ins as {buf, bitins}) =
+        let
+          (* first bit       BFINAL *)
+          val bfinal = BitIO.bits (bitins, 0w1)
+          (* next 2 bits     BTYPE *)
+          val btype = BitIO.bits (bitins, 0w1)
+        in
+          case btype of
+               (* 00 - no compression *)
+               0w0 => readStored ins
+               (* 01 - compressed with fixed Huffman codes *)
+             | 0w1 =>
+                 readCompressed fixed ins
+               (* 10 - compressed with dynamic Huffman codes *)
+             | 0w2 => raise Fail "unimplemented"
+               (* 11 - reserved (error) *)
+             | _ => raise Fail "invalid block type"
+        end
 
   fun input {buf as ref (v::vs), ...} = (buf := vs; v)
     | input (ins : instream) = (extend ins; input ins)
