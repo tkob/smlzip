@@ -4,9 +4,6 @@ structure Word8Buffer :> sig
   val put : t * Word8Array.array -> unit
   val putVec : t * Word8Vector.vector -> unit
 
-  (* vector t: returns a vector of the entire buffer *)
-  val vector : t -> Word8Vector.vector
-
   (* last (t, sz): returns last sz bytes of the buffer *)
   val last : t * int -> Word8Array.array
 end = struct
@@ -26,13 +23,6 @@ end = struct
 
   val put = put' Word8Array.app;
   val putVec = put' Word8Vector.app;
-
-  fun vector {buffer, p = ref p} =
-        let
-          val slice = Word8ArraySlice.slice (buffer, 0, SOME p)
-        in
-          Word8ArraySlice.vector slice
-        end
 
   fun last ({buffer, p = ref p}, size) =
         let
