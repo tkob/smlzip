@@ -1,4 +1,4 @@
-structure Word8Buffer :> sig
+structure Word8RingBuffer :> sig
   type t
   val create : int -> t
   val put : t * Word8Array.array -> unit
