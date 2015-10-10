@@ -7,8 +7,8 @@ structure Word8Buffer :> sig
   (* vector t: returns a vector of the entire buffer *)
   val vector : t -> Word8Vector.vector
 
-  (* get (t, sz): returns last sz bytes of the buffer *)
-  val get : t * int -> Word8Array.array
+  (* last (t, sz): returns last sz bytes of the buffer *)
+  val last : t * int -> Word8Array.array
 end = struct
   type t = { buffer : Word8Array.array, p : int ref }
 
@@ -34,7 +34,7 @@ end = struct
           Word8ArraySlice.vector slice
         end
 
-  fun get ({buffer, p = ref p}, size) =
+  fun last ({buffer, p = ref p}, size) =
         let
           val dest = Word8Array.array (size, 0w00)
           fun copy (_, 0) = ()
