@@ -8,7 +8,7 @@ structure Deflate :> sig
   val endOfStream : instream -> bool
   val construct : int array -> int Tree.t
   val fixed : int Tree.t
-  val readLiteral : int Tree.t -> instream -> int
+  val readLiteral : int Tree.t -> BitIO.instream -> int
 end = struct
   fun unpackInt vec =
     Word8Vector.foldr (fn (byte, int) => int * 0x100 + Word8.toInt byte) 0 vec
@@ -129,12 +129,12 @@ end = struct
 
   (* decode literal/length value from input stream *)
   fun readLiteral (Tree.Leaf value) _ = value
-    | readLiteral (Tree.Node (zero, one)) (ins as {buf as ref vs, bitins}) =
+    | readLiteral (Tree.Node (zero, one)) bitins =
         let
           val bit = BitIO.bits (bitins, 0w1)
         in
-          if bit = 0w0 then readLiteral zero ins
-          else readLiteral one ins
+          if bit = 0w0 then readLiteral zero bitins
+          else readLiteral one bitins
         end
 
   fun readCompressed huffman (ins as {buf as ref vs, bitins}) =
@@ -143,7 +143,7 @@ end = struct
           val segment = Word8Array.array (segmentSize, 0w0)
           fun read index segments =
                 let
-                  val value = readLiteral huffman ins
+                  val value = readLiteral huffman bitins
                 in
                   if value < 0x100 then (
                     Word8Array.update (segment, index, Word8.fromInt value);
