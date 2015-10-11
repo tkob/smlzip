@@ -5,6 +5,8 @@ structure Word8RingBuffer :> sig
   val putVec : t * Word8Vector.vector -> unit
   val putElem : t * Word8.word -> unit
 
+  val getElem : t * int -> Word8.word
+
   (* prev (t, sz): returns last sz bytes of the buffer *)
   val prev : t * int -> Word8Array.array
 end = struct
@@ -25,6 +27,14 @@ end = struct
   val put = put' Word8Array.app;
   val putVec = put' Word8Vector.app;
   val putElem = put' (fn f => fn x => f x)
+
+  fun getElem ({buffer, p = ref p}, distance) =
+        let
+          val bufferLen = Word8Array.length buffer
+          val pos = (p - distance) mod bufferLen
+        in
+          Word8Array.sub (buffer, pos)
+        end
 
   fun prev ({buffer, p = ref p}, size) =
         let
