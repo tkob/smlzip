@@ -1,0 +1,7 @@
+# vim: set filetype=tcl :
+
+# config file for DejaGnu (runtest)
+
+set srcdir [file normalize ./testsuite]
+set outdir [file normalize ./testsuite/log]
+
