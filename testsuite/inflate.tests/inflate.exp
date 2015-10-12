@@ -2,6 +2,11 @@
 
 # test for example/inflate
 
+proc dump {data} {
+    binary scan $data B* bits
+    return [regexp -all -inline ........ $bits]
+}
+
 proc test_inflate {test_name src_str level} {
     global exampledir
 
@@ -9,14 +14,19 @@ proc test_inflate {test_name src_str level} {
     try {
         # deflate(compress) src_str and write the result in the tempfile
         fconfigure $tempfile -encoding binary
-        puts -nonewline $tempfile [zlib deflate $src_str $level]
+        set deflated [zlib deflate $src_str $level]
+        puts -nonewline $tempfile $deflated
         close $tempfile
     
-        set inflated [exec $exampledir/inflate $tempfilename]
+        if {[catch {exec $exampledir/inflate $tempfilename} inflated]} {
+            fail "$test_name failed: dump: [dump $deflated]\n"
+            return
+        }
+
         if {$inflated == $src_str} {
             pass "$test_name passed.\n"
         } else {
-            fail "$test_name failed: expected \"$src_str\".\n"
+            fail "$test_name failed: dump: [dump $deflated]\n"
         }
     } finally {
         file delete $tempfilename
@@ -28,3 +38,6 @@ test_inflate "Stored 255 bytes" [string repeat x 255] 0
 test_inflate "Stored 256 bytes" [string repeat x 256] 0
 test_inflate "Stored 65535 bytes" [string repeat x 65535] 0
 test_inflate "Stored 65536 bytes" [string repeat x 65536] 0
+test_inflate "aa" "aa" 1
+test_inflate "ab" "ab" 1
+test_inflate "aaaaa" "aaaaa" 1
