@@ -265,7 +265,7 @@ end = struct
   fun input {buf as ref (v::vs), ...} = (buf := vs; v)
     | input (ins : instream) = (extend ins; input ins)
 
-  fun endOfStream {buf as ref (_::_), ...} = false
+  fun endOfStream ({buf as ref (_::_), ...} : instream) = false
     | endOfStream {buf as ref [], bitins, ...} = BitIO.endOfStream bitins
 
 end
