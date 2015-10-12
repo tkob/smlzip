@@ -13,14 +13,16 @@ end = struct
   type buffer = Word8Vector.vector list
   type instream = { buf : buffer ref,
                     bitins : BitIO.instream,
-                    prev : Word8RingBuffer.t }
+                    prev : Word8RingBuffer.t,
+                    exhausted : bool ref }
 
   fun fromBitInstream bitins : instream =
         { buf = ref [],
           bitins = bitins,
           (* the LZ77 algorithm may use a reference to a duplicated string
              occurring in a previous block, up to 32K input bytes before. *)
-          prev = Word8RingBuffer.create 32768 }
+          prev = Word8RingBuffer.create 32768,
+          exhausted = ref false }
 
   val fromBinInstream = fromBitInstream o BitIO.fromBinInstream
   val fromBytes = fromBitInstream o BitIO.fromBytes
@@ -187,7 +189,7 @@ end = struct
           end
   end
 
-  fun readCompressed huffman (ins as {buf, bitins, prev}) =
+  fun readCompressed huffman (ins as {buf, bitins, prev, exhausted}) =
         let
           val segmentSize = 256
           val segment = Word8Array.array (segmentSize, 0w0)
@@ -214,8 +216,9 @@ end = struct
                       read 0 (Word8Array.vector segment::segments)
                     else
                       read (index + 1) segments)
-                  else if value = 0x100 then
-                    flush ()
+                  else if value = 0x100 then (
+                    flush ();
+                    exhausted := true)
                   else (
                     flush ();
                     let
@@ -243,7 +246,7 @@ end = struct
         end
 
   (* 3.2.3. Details of block format *)
-  fun extend (ins as {buf, bitins, ...}) =
+  fun extend (ins as {buf, bitins, ...} : instream) =
         let
           (* first bit       BFINAL *)
           val bfinal = BitIO.bits (bitins, 0w1)
@@ -266,6 +269,7 @@ end = struct
     | input (ins : instream) = (extend ins; input ins)
 
   fun endOfStream ({buf as ref (_::_), ...} : instream) = false
+    | endOfStream {buf as ref [], exhausted as ref true, ...} = true
     | endOfStream {buf as ref [], bitins, ...} = BitIO.endOfStream bitins
 
 end
