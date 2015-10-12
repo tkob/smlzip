@@ -1,5 +1,7 @@
 $(SML_LIB)/basis/basis.mlb
 ../bitio.sml
+../word8ringbuffer.sml
+../edge.sml
+../tree.sml
 ../deflate.sml
-../example/inflate.sml
-../example/inflate-boot.sml
+inflate.sml

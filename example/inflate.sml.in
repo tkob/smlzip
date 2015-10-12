@@ -1,0 +1,67 @@
+structure Main = struct
+  (* make BinIO.instream from Posix.IO.file_desc *)
+  fun mkInstream fd = 
+        let 
+          val reader = Posix.IO.mkBinReader 
+              {fd = fd, name = "", initBlkMode = true} 
+          val instream = BinIO.StreamIO.mkInstream 
+              (reader, Word8Vector.fromList []) 
+        in 
+          BinIO.mkInstream instream 
+        end 
+  
+  (* make BinIO.outstream from Posix.IO.file_desc *)
+  fun mkOutstream fd = 
+        let 
+          val writer = Posix.IO.mkBinWriter
+              {fd = fd, name = "",
+               appendMode = true,
+               initBlkMode = true,
+               chunkSize = 1024}
+          val outstream = BinIO.StreamIO.mkOutstream
+              (writer, IO.NO_BUF)
+        in 
+          BinIO.mkOutstream outstream 
+        end 
+  
+  fun main (name, arguments) =
+        let
+          (* val ins = (Deflate.fromBinInstream o mkInstream) Posix.FileSys.stdin *)
+          val fileName = List.hd arguments
+          val ins = Deflate.fromBinInstream (BinIO.openIn fileName)
+          val outs = mkOutstream Posix.FileSys.stdout
+        in
+          while not (Deflate.endOfStream ins) do
+            let val buf = Deflate.input ins in
+              BinIO.output (outs, buf)
+            end;
+          OS.Process.success
+        end
+end
+
+ifelse(SML_COMPILER,`mlton', `define(`SML_MAIN_FUN')')
+ifelse(SML_COMPILER,`mlkit', `define(`SML_MAIN_FUN')')
+ifelse(SML_COMPILER,`poly', `define(`SML_MAIN_FUN')')
+ifelse(SML_COMPILER,`alice', `define(`SML_MAIN_FUN')')
+ifelse(SML_COMPILER,`mosml', `define(`SML_MAIN_FUN')')
+ifelse(SML_COMPILER,`smlsharp', `define(`SML_MAIN_FUN')')
+
+ifdef(`SML_MAIN_FUN',`
+fun main () =
+  let
+    val name = CommandLine.name ()
+    val arguments = CommandLine.arguments ()
+  in
+      OS.Process.exit (Main.main (name, arguments))
+  end
+')
+
+ifelse(SML_COMPILER,`mlton', `define(`SML_BOOT_VAL')')
+ifelse(SML_COMPILER,`mlkit', `define(`SML_BOOT_VAL')')
+ifelse(SML_COMPILER,`alice', `define(`SML_BOOT_VAL')')
+ifelse(SML_COMPILER,`mosml', `define(`SML_BOOT_VAL')')
+ifelse(SML_COMPILER,`smlsharp', `define(`SML_BOOT_VAL')')
+
+ifdef(`SML_BOOT_VAL',`
+val _ = main ()
+')
