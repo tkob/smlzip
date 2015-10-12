@@ -145,12 +145,66 @@ end = struct
           else readLiteral one bitins
         end
 
-  fun readCompressed huffman (ins as {buf as ref vs, bitins, prev}) =
+  local
+    val length = Vector.fromList
+      [  3,   4,   5,   6,   7,   8,   9,  10,  11, 13,
+        15,  17,  19,  23,  27,  31,  35,  43,  51, 59,
+        67,  83,  99, 115, 131, 163, 195, 227, 258]
+    val extraBits = Vector.fromList
+      [0w0, 0w0, 0w0, 0w0, 0w0, 0w0, 0w0, 0w0, 0w1,0w1,
+       0w1, 0w1, 0w2, 0w2, 0w2, 0w2, 0w3, 0w3, 0w3,0w3,
+       0w4, 0w4, 0w4, 0w4, 0w5, 0w5, 0w5, 0w5, 0w0]
+  in
+    fun decodeLength (alphabet, bitins) =
+          let
+            val index = alphabet - 257
+            val length = Vector.sub (length, index)
+            val extraBits = Vector.sub (extraBits, index)
+            val extra = BitIO.bits (bitins, extraBits)
+          in
+            length + (Word.toInt extra)
+          end
+  end
+
+  local
+    val dist = Vector.fromList
+      [   1,    2,    3,    4,    5,    7,     9,    13,    17,   25,
+         33,   49,   65,   97,  129,  193,   257,   385,   513,  769,
+       1025, 1537, 2049, 3073, 4097, 6145,  8193, 12289, 16385, 24577]
+    val extraBits = Vector.fromList
+      [ 0w0,  0w0,  0w0,  0w0,  0w1,  0w1,   0w2,   0w2,   0w3,  0w3,
+        0w4,  0w4,  0w5,  0w5,  0w6,  0w6,   0w7,   0w7,   0w8,  0w8,
+        0w9,  0w9, 0w10, 0w10, 0w11, 0w11,  0w12,  0w12,  0w13, 0w13]
+  in
+    fun decodeDistance bitins =
+          let
+            val code = Word.toInt (BitIO.bits (bitins, 0w5))
+            val dist = Vector.sub (dist, code)
+            val extraBits = Vector.sub (extraBits, code)
+            val extra = BitIO.bits (bitins, extraBits)
+          in
+            dist + (Word.toInt extra)
+          end
+  end
+
+  fun readCompressed huffman (ins as {buf, bitins, prev}) =
         let
           val segmentSize = 256
           val segment = Word8Array.array (segmentSize, 0w0)
           fun read index segments =
                 let
+                  fun flush () =
+                        if index = 0 then ()
+                        else
+                          let
+                            open Word8ArraySlice
+                            val segments' =
+                              if index = 0 then segments
+                              else
+                                (vector (slice (segment, 0, SOME index)))::segments
+                          in
+                            buf := !buf @ rev segments'
+                          end
                   val value = readLiteral huffman bitins
                 in
                   if value < 0x100 then (
@@ -161,17 +215,28 @@ end = struct
                     else
                       read (index + 1) segments)
                   else if value = 0x100 then
+                    flush ()
+                  else (
+                    flush ();
                     let
-                      open Word8ArraySlice
-                      val segments' =
-                        if index = 0 then segments
-                        else
-                          (vector (slice (segment, 0, SOME index)))::segments
+                      val length = decodeLength (value, bitins)
+                      val dist = decodeDistance bitins
+                      val segment = Word8Array.array (length, 0w0)
+                      fun copy index =
+                            if index >= length then ()
+                            else
+                              let
+                                val byte = Word8RingBuffer.getElem (prev, dist)
+                              in
+                                Word8Array.update (segment, index, byte);
+                                Word8RingBuffer.putElem (prev, byte);
+                                copy (index + 1)
+                              end
                     in
-                      buf := vs @ rev segments'
-                    end
-                  else
-                    raise Fail "unimplemented >0x100"
+                      copy 0;
+                      buf := !buf @ [Word8Array.vector segment];
+                      read 0 []
+                    end)
                 end
         in
           read 0 []
