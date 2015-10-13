@@ -219,8 +219,7 @@ end = struct
                     else
                       read (index + 1) segments)
                   else if value = 0x100 then (
-                    flush ();
-                    exhausted := true)
+                    flush ())
                   else (
                     flush ();
                     let
@@ -247,7 +246,7 @@ end = struct
         end
 
   (* 3.2.3. Details of block format *)
-  fun extend (ins as {buf, bitins, ...} : instream) =
+  fun extend (ins as {buf, bitins, exhausted, ...} : instream) =
         let
           (* first bit       BFINAL *)
           val bfinal = BitIO.bits (bitins, 0w1)
@@ -263,7 +262,8 @@ end = struct
                (* 10 - compressed with dynamic Huffman codes *)
              | 0w2 => raise Fail "unimplemented"
                (* 11 - reserved (error) *)
-             | _ => raise Fail "invalid block type"
+             | _ => raise Fail "invalid block type";
+          if bfinal = 0w0 then () else exhausted := true
         end
 
   fun input {buf as ref (v::vs), ...} = (buf := vs; v)
