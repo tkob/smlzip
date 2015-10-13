@@ -207,11 +207,13 @@ end = struct
                           in
                             buf := !buf @ rev segments'
                           end
+                  fun put (segment, index, value) = (
+                        Word8Array.update (segment, index, value);
+                        Word8RingBuffer.putElem (prev, value))
                   val value = readLiteral huffman bitins
                 in
                   if value < 0x100 then (
-                    Word8Array.update (segment, index, Word8.fromInt value);
-                    Word8RingBuffer.putElem (prev, Word8.fromInt value);
+                    put (segment, index, Word8.fromInt value);
                     if index + 1 >= segmentSize then
                       read 0 (Word8Array.vector segment::segments)
                     else
@@ -231,8 +233,7 @@ end = struct
                               let
                                 val byte = Word8RingBuffer.getElem (prev, dist)
                               in
-                                Word8Array.update (segment, index, byte);
-                                Word8RingBuffer.putElem (prev, byte);
+                                put (segment, index, byte);
                                 copy (index + 1)
                               end
                     in
