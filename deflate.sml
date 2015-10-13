@@ -193,6 +193,9 @@ end = struct
         let
           val segmentSize = 256
           val segment = Word8Array.array (segmentSize, 0w0)
+          fun put (segment, index, value) = (
+                Word8Array.update (segment, index, value);
+                Word8RingBuffer.putElem (prev, value))
           fun read index segments =
                 let
                   fun flush () =
@@ -207,9 +210,6 @@ end = struct
                           in
                             buf := !buf @ rev segments'
                           end
-                  fun put (segment, index, value) = (
-                        Word8Array.update (segment, index, value);
-                        Word8RingBuffer.putElem (prev, value))
                   val value = readLiteral huffman bitins
                 in
                   if value < 0x100 then (
