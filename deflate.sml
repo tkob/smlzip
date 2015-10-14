@@ -121,7 +121,7 @@ end = struct
         end
 
   (* 3.2.4. Non-compressed blocks (BTYPE=00) *)
-  fun readStored {buf as ref vs, bitins, ...} =
+  fun readStored bitins =
         let
           fun unpackInt vec =
                 Word8Vector.foldr
@@ -134,7 +134,7 @@ end = struct
           val _ = nlen = invert len orelse raise Fail "didn't match complement"
           val v = BitIO.inputN (bitins, unpackInt len)
         in
-          buf := vs @ [v]
+          [v]
         end
 
   (* decode literal/length value from input stream *)
@@ -255,7 +255,7 @@ end = struct
         in
           case btype of
                (* 00 - no compression *)
-               0w0 => readStored ins
+               0w0 => buf := !buf @ readStored bitins
                (* 01 - compressed with fixed Huffman codes *)
              | 0w1 =>
                  readCompressed fixed ins
