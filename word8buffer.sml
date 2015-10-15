@@ -6,6 +6,7 @@ structure Word8Buffer :> sig
   val isEmpty : t -> bool
   val freeze : t -> Word8Vector.vector
   val init : t -> unit
+  val flush : t -> Word8Vector.vector
   val length : t -> int
 end = struct
   type t = { buffer : Word8Array.array, p : int ref }
@@ -27,6 +28,8 @@ end = struct
         end
 
   fun init {buffer, p} = p := 0
+
+  fun flush t = freeze t before init t
 
   fun length {buffer, p} = !p
 end
