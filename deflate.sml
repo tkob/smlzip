@@ -189,60 +189,50 @@ end = struct
           end
   end
 
-  fun readCompressed huffman (ins as {buf, bitins, prev, exhausted}) =
+  fun readCompressed huffman (ins as {bitins, prev, ...}) =
         let
           val segmentSize = 256
-          val segment = Word8Array.array (segmentSize, 0w0)
-          fun put (segment, index, value) = (
-                Word8Array.update (segment, index, value);
+          val segment = Word8Buffer.create segmentSize
+          fun put (segment, value) = (
+                Word8Buffer.putElem (segment, value);
                 Word8RingBuffer.putElem (prev, value))
-          fun read index segments =
+          fun read segments =
                 let
-                  fun flush () =
-                        if index = 0 then ()
-                        else
-                          let
-                            open Word8ArraySlice
-                            val segments' =
-                              if index = 0 then segments
-                              else
-                                (vector (slice (segment, 0, SOME index)))::segments
-                          in
-                            buf := !buf @ rev segments'
-                          end
                   val value = readLiteral huffman bitins
                 in
                   if value < 0x100 then (
-                    put (segment, index, Word8.fromInt value);
-                    if index + 1 >= segmentSize then
-                      read 0 (Word8Array.vector segment::segments)
+                    put (segment, Word8.fromInt value);
+                    if Word8Buffer.isFull segment then
+                      read (Word8Buffer.freeze segment::segments)
+                      before Word8Buffer.init segment
                     else
-                      read (index + 1) segments)
-                  else if value = 0x100 then (
-                    flush ())
+                      read segments)
+                  else if value = 0x100 then
+                    rev (Word8Buffer.freeze segment::segments
+                         before Word8Buffer.init segment)
                   else (
-                    flush ();
                     let
+                      val segments = Word8Buffer.freeze segment::segments
+                                     before Word8Buffer.init segment
                       val length = decodeLength (value, bitins)
                       val dist = decodeDistance bitins
-                      val segment = Word8Array.array (length, 0w0)
-                      fun copy index =
-                            if index >= length then ()
+                      val segment = Word8Buffer.create length
+                      fun copy () =
+                            if Word8Buffer.isFull segment then ()
                             else
                               let
                                 val byte = Word8RingBuffer.getElem (prev, dist)
                               in
-                                put (segment, index, byte);
-                                copy (index + 1)
+                                put (segment, byte);
+                                copy ()
                               end
                     in
-                      copy 0;
-                      buf := !buf @ [Word8Array.vector segment];
-                      read 0 []
+                      copy ();
+                      read (Word8Buffer.freeze segment::segments)
                     end)
                 end
         in
-          read 0 []
+          read []
         end
 
   (* 3.2.3. Details of block format *)
@@ -257,8 +247,7 @@ end = struct
                (* 00 - no compression *)
                0w0 => buf := !buf @ readStored bitins
                (* 01 - compressed with fixed Huffman codes *)
-             | 0w1 =>
-                 readCompressed fixed ins
+             | 0w1 => buf := !buf @ readCompressed fixed ins
                (* 10 - compressed with dynamic Huffman codes *)
              | 0w2 => raise Fail "unimplemented"
                (* 11 - reserved (error) *)
