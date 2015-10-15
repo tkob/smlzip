@@ -205,21 +205,23 @@ end = struct
                     if Word8Buffer.isFull segment then
                       let
                         val newLength = totalLength + segmentSize
-                        val segments' = Word8Buffer.freeze segment::segments
+                        val segments' = Word8Buffer.flush segment::segments
                       in
-                        Word8Buffer.init segment;
                         read (segments', newLength)
                       end
                     else
                       read (segments, totalLength))
                   else if value = 0x100 then
-                    rev (Word8Buffer.freeze segment::segments
-                         before Word8Buffer.init segment)
+                    let
+                      val segments' = Word8Buffer.flush segment::segments
+                    in
+                      rev segments'
+                    end
                   else (
                     let
-                      val segments' = Word8Buffer.freeze segment::segments
-                                      before Word8Buffer.init segment
+                      val segments' = Word8Buffer.flush segment::segments
                       val totalLength' = totalLength + Word8Buffer.length segment
+
                       val length = decodeLength (value, bitins)
                       val dist = decodeDistance bitins
                       val segment = Word8Buffer.create length
@@ -234,7 +236,7 @@ end = struct
                               end
                     in
                       copy ();
-                      read (Word8Buffer.freeze segment::segments', totalLength' + length)
+                      read (Word8Buffer.flush segment::segments', totalLength' + length)
                     end)
                 end
         in
