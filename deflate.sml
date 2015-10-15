@@ -196,24 +196,30 @@ end = struct
           fun put (segment, value) = (
                 Word8Buffer.putElem (segment, value);
                 Word8RingBuffer.putElem (prev, value))
-          fun read segments =
+          fun read (segments, totalLength) =
                 let
                   val value = readLiteral huffman bitins
                 in
                   if value < 0x100 then (
                     put (segment, Word8.fromInt value);
                     if Word8Buffer.isFull segment then
-                      read (Word8Buffer.freeze segment::segments)
-                      before Word8Buffer.init segment
+                      let
+                        val newLength = totalLength + segmentSize
+                        val segments' = Word8Buffer.freeze segment::segments
+                      in
+                        Word8Buffer.init segment;
+                        read (segments', newLength)
+                      end
                     else
-                      read segments)
+                      read (segments, totalLength))
                   else if value = 0x100 then
                     rev (Word8Buffer.freeze segment::segments
                          before Word8Buffer.init segment)
                   else (
                     let
-                      val segments = Word8Buffer.freeze segment::segments
-                                     before Word8Buffer.init segment
+                      val segments' = Word8Buffer.freeze segment::segments
+                                      before Word8Buffer.init segment
+                      val totalLength' = totalLength + Word8Buffer.length segment
                       val length = decodeLength (value, bitins)
                       val dist = decodeDistance bitins
                       val segment = Word8Buffer.create length
@@ -228,11 +234,11 @@ end = struct
                               end
                     in
                       copy ();
-                      read (Word8Buffer.freeze segment::segments)
+                      read (Word8Buffer.freeze segment::segments', totalLength' + length)
                     end)
                 end
         in
-          read []
+          read ([], 0)
         end
 
   (* 3.2.3. Details of block format *)
