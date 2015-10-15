@@ -196,32 +196,21 @@ end = struct
           fun put (segment, value) = (
                 Word8Buffer.putElem (segment, value);
                 Word8RingBuffer.putElem (prev, value))
-          fun read (segments, totalLength) =
+          fun read segments =
                 let
                   val value = readLiteral huffman bitins
                 in
                   if value < 0x100 then (
                     put (segment, Word8.fromInt value);
                     if Word8Buffer.isFull segment then
-                      let
-                        val newLength = totalLength + segmentSize
-                        val segments' = Word8Buffer.flush segment::segments
-                      in
-                        read (segments', newLength)
-                      end
+                      read (Word8Buffer.flush segment::segments)
                     else
-                      read (segments, totalLength))
+                      read segments)
                   else if value = 0x100 then
-                    let
-                      val segments' = Word8Buffer.flush segment::segments
-                    in
-                      rev segments'
-                    end
+                    rev (Word8Buffer.flush segment::segments)
                   else (
                     let
                       val segments' = Word8Buffer.flush segment::segments
-                      val totalLength' = totalLength + Word8Buffer.length segment
-
                       val length = decodeLength (value, bitins)
                       val dist = decodeDistance bitins
                       val segment = Word8Buffer.create length
@@ -236,11 +225,11 @@ end = struct
                               end
                     in
                       copy ();
-                      read (Word8Buffer.flush segment::segments', totalLength' + length)
+                      read (Word8Buffer.freeze segment::segments')
                     end)
                 end
         in
-          read ([], 0)
+          read []
         end
 
   (* 3.2.3. Details of block format *)
