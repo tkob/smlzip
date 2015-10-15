@@ -134,7 +134,7 @@ end = struct
           val _ = nlen = invert len orelse raise Fail "didn't match complement"
           val v = BitIO.inputN (bitins, unpackInt len)
         in
-          [v]
+          v
         end
 
   (* decode literal/length value from input stream *)
@@ -207,7 +207,7 @@ end = struct
                     else
                       read segments)
                   else if value = 0x100 then
-                    rev (Word8Buffer.flush segment::segments)
+                    Word8Vector.concat (rev (Word8Buffer.flush segment::segments))
                   else (
                     let
                       val segments' = Word8Buffer.flush segment::segments
@@ -242,9 +242,9 @@ end = struct
         in
           case btype of
                (* 00 - no compression *)
-               0w0 => buf := !buf @ readStored bitins
+               0w0 => buf := !buf @ [readStored bitins]
                (* 01 - compressed with fixed Huffman codes *)
-             | 0w1 => buf := !buf @ readCompressed fixed ins
+             | 0w1 => buf := !buf @ [readCompressed fixed ins]
                (* 10 - compressed with dynamic Huffman codes *)
              | 0w2 => raise Fail "unimplemented"
                (* 11 - reserved (error) *)
