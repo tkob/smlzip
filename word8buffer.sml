@@ -15,7 +15,7 @@ end = struct
         Word8Array.update (buffer, !p, byte);
         p := (!p + 1))
 
-  fun isFull {buffer, p} = !p > Word8Array.length buffer
+  fun isFull {buffer, p} = !p >= Word8Array.length buffer
   fun isEmpty {buffer, p} = !p = 0
 
   fun freeze {buffer, p} =
