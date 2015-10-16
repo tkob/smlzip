@@ -232,6 +232,9 @@ end = struct
           read []
         end
 
+  fun readTree (ins as {bitins, prev, ...}) =
+        raise Fail "unimplemented"
+
   (* 3.2.3. Details of block format *)
   fun extend (ins as {buf, bitins, exhausted, ...} : instream) =
         let
@@ -246,13 +249,19 @@ end = struct
                (* 01 - compressed with fixed Huffman codes *)
              | 0w1 => buf := !buf @ [readCompressed fixed ins]
                (* 10 - compressed with dynamic Huffman codes *)
-             | 0w2 => raise Fail "unimplemented"
+             | 0w2 =>
+                 let
+                   val tree = readTree ins
+                 in
+                   buf := !buf @ [readCompressed tree ins]
+                 end
                (* 11 - reserved (error) *)
              | _ => raise Fail "invalid block type";
           if bfinal = 0w0 then () else exhausted := true
         end
 
   fun input {buf as ref (v::vs), ...} = (buf := vs; v)
+    | input {buf as ref [], exhausted as ref true, ...} = raise Fail "exausted"
     | input (ins : instream) = (extend ins; input ins)
 
   fun endOfStream ({buf as ref (_::_), ...} : instream) = false
