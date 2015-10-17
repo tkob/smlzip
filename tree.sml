@@ -10,9 +10,11 @@ structure Tree = struct
     | make paths =
         let
           fun split (path as (edges, _), (zero, one)) = 
-                case Edge.direction edges of
-                     Edge.Zero => (path::zero, one)
-                   | Edge.One => (zero, path::one)
+                if Edge.isDeadEnd edges then (zero, one)
+                else
+                  case Edge.direction edges of
+                       Edge.Zero => (path::zero, one)
+                     | Edge.One => (zero, path::one)
           val (zero, one) = List.foldr split ([], []) paths
         in
           Node (make (map ahead zero), make (map ahead one))
