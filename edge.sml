@@ -8,6 +8,7 @@ structure Edge :> sig
   val toList : edges -> edge list
   val fromWordAndLength : Word.word * int -> edges
   val toWordAndLength : edges -> Word.word * int
+  val toString : edges -> string
 end = struct
   datatype edge = Zero | One
   type edges = Word.word * int
@@ -46,4 +47,12 @@ end = struct
         end
   fun fromWordAndLength x = x
   fun toWordAndLength x = x
+
+  fun toString edges =
+        let
+          fun edgeToString Zero = "0"
+            | edgeToString One = "1"
+        in
+          List.foldr (fn (edge, s) => edgeToString edge ^ s) "" (toList edges)
+        end
 end
