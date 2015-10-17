@@ -19,14 +19,14 @@ proc test_inflate {test_name src_str level} {
         close $tempfile
     
         if {[catch {exec $exampledir/inflate $tempfilename} inflated]} {
-            fail "$test_name failed: dump: [dump $deflated]\n"
+            fail "$test_name execution failed: output=$inflated, input=[dump $deflated]\n"
             return
         }
 
         if {$inflated == $src_str} {
             pass "$test_name passed.\n"
         } else {
-            fail "$test_name failed: dump: [dump $deflated]\n"
+            fail "$test_name failed: output=$inflated, input=[dump $deflated]\n"
         }
     } finally {
         file delete $tempfilename
