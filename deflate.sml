@@ -232,8 +232,30 @@ end = struct
           read []
         end
 
+  val order = Vector.fromList
+    [ 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 ]
+
   fun readTree (ins as {bitins, prev, ...}) =
-        raise Fail "unimplemented"
+        let
+          val numLit = Word.toInt (BitIO.bits (bitins, 0w5)) + 257
+          val numDist = Word.toInt (BitIO.bits (bitins, 0w5)) + 1
+          val numCodeLenCodes = Word.toInt (BitIO.bits (bitins, 0w4)) + 4
+          val codeLenCodes = Array.array (19, 0)
+          fun makeCodeLenCodes index =
+                if index >= numCodeLenCodes then ()
+                else
+                  let
+                    val alphabet = Vector.sub (order, index)
+                    val codeLenCode = Word.toInt (BitIO.bits (bitins, 0w3))
+                  in
+                    Array.update (codeLenCodes, alphabet, codeLenCode);
+                    makeCodeLenCodes (index + 1)
+                  end
+          val _ = makeCodeLenCodes 0
+          val tree = construct codeLenCodes
+        in
+          raise Fail "unimplemented"
+        end
 
   (* 3.2.3. Details of block format *)
   fun extend (ins as {buf, bitins, exhausted, ...} : instream) =
