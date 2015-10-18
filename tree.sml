@@ -18,15 +18,6 @@ structure Tree = struct
                      | Edge.One => (zero, path::one)
           val (zero, one) = List.foldr split ([], []) paths
         in
-          (*
-          print "-->\n";
-          List.app
-            (fn (edges, value) => (
-              print "edges ";
-              print (Edge.toString edges ^ "\n")))
-            paths;
-          print "<--\n";
-          *)
           Node (make (map ahead zero), make (map ahead one))
         end
 
