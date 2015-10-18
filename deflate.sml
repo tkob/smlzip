@@ -7,7 +7,6 @@ structure Deflate :> sig
   val input : instream -> Word8Vector.vector
   val endOfStream : instream -> bool
   val construct : int array -> int Tree.t
-  val fixed : int Tree.t
   val readLiteral : int Tree.t -> BitIO.instream -> int
 end = struct
   type buffer = Word8Vector.vector list
@@ -108,7 +107,7 @@ end = struct
         end
 
   (* 3.2.6. Compression with fixed Huffman codes (BTYPE=01) *)
-  val fixed =
+  val fixedAlphabet =
         let
           fun f code =
             if code < 144 then 8
@@ -273,7 +272,7 @@ end = struct
                (* 00 - no compression *)
                0w0 => buf := !buf @ [readStored bitins]
                (* 01 - compressed with fixed Huffman codes *)
-             | 0w1 => buf := !buf @ [readCompressed fixed ins]
+             | 0w1 => buf := !buf @ [readCompressed fixedAlphabet ins]
                (* 10 - compressed with dynamic Huffman codes *)
              | 0w2 =>
                  let
