@@ -180,10 +180,9 @@ end = struct
         0w4,  0w4,  0w5,  0w5,  0w6,  0w6,   0w7,   0w7,   0w8,  0w8,
         0w9,  0w9, 0w10, 0w10, 0w11, 0w11,  0w12,  0w12,  0w13, 0w13]
   in
-    fun decodeDistance bitins =
+    fun decodeDistance (tree, bitins) =
           let
-            val code = Word.toInt (BitIO.bits (bitins, 0w5))
-            (* val code = readLiteral fixedDist bitins *)
+            val code = readLiteral tree bitins
             val dist = Vector.sub (dist, code)
             val extraBits = Vector.sub (extraBits, code)
             val extra = BitIO.bits (bitins, extraBits)
@@ -192,7 +191,7 @@ end = struct
           end
   end
 
-  fun readCompressed huffman (ins as {bitins, prev, ...}) =
+  fun readCompressed (alphabetTree, distTree) (ins as {bitins, prev, ...}) =
         let
           val segmentSize = 256
           val segment = Word8Buffer.create segmentSize
@@ -201,7 +200,7 @@ end = struct
                 Word8RingBuffer.putElem (prev, value))
           fun read segments =
                 let
-                  val value = readLiteral huffman bitins
+                  val value = readLiteral alphabetTree bitins
                 in
                   if value < 0x100 then (
                     put (segment, Word8.fromInt value);
@@ -215,7 +214,7 @@ end = struct
                     let
                       val segments' = Word8Buffer.flush segment::segments
                       val length = decodeLength (value, bitins)
-                      val dist = decodeDistance bitins
+                      val dist = decodeDistance (distTree, bitins)
                       val segment = Word8Buffer.create length
                       fun copy () =
                             if Word8Buffer.isFull segment then ()
@@ -272,7 +271,7 @@ end = struct
                (* 00 - no compression *)
                0w0 => buf := !buf @ [readStored bitins]
                (* 01 - compressed with fixed Huffman codes *)
-             | 0w1 => buf := !buf @ [readCompressed fixedAlphabet ins]
+             | 0w1 => buf := !buf @ [readCompressed (fixedAlphabet, fixedDist) ins]
                (* 10 - compressed with dynamic Huffman codes *)
              | 0w2 =>
                  let
