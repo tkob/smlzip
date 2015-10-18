@@ -141,6 +141,7 @@ end = struct
 
   (* decode literal/length value from input stream *)
   fun readLiteral (Tree.Leaf value) _ = value
+    | readLiteral Tree.None _ = raise Fail "cannot decode None"
     | readLiteral (Tree.Node (zero, one)) bitins =
         let
           val bit = BitIO.bits (bitins, 0w1)

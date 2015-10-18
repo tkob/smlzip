@@ -18,23 +18,36 @@ structure Tree = struct
                      | Edge.One => (zero, path::one)
           val (zero, one) = List.foldr split ([], []) paths
         in
+          (*
+          print "-->\n";
+          List.app
+            (fn (edges, value) => (
+              print "edges ";
+              print (Edge.toString edges ^ "\n")))
+            paths;
+          print "<--\n";
+          *)
           Node (make (map ahead zero), make (map ahead one))
         end
 
   fun follow (Leaf value, edges) =
         if Edge.isDeadEnd edges then value
         else raise Fail "reached dead end"
+    | follow (None, edges) = raise Fail "cannot follow None"
     | follow (Node (zero, one), edges) =
         case Edge.direction edges of
              Edge.Zero => follow (zero, Edge.ahead edges)
            | Edge.One => follow (one, Edge.ahead edges)
 
   fun zero (Leaf _) = raise Fail "leaf"
+    | zero None = raise Fail "none"
     | zero (Node (zero, _)) = zero
   fun one (Leaf _) = raise Fail "leaf"
+    | one None = raise Fail "none"
     | one (Node (_, one)) = one
 
   fun show toString (Leaf value) = toString value
+    | show toString None = "none"
     | show toString (Node (zero, one)) =
         "(" ^ show toString zero ^ ", " ^ show toString one ^ ")"
 end
