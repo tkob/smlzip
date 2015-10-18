@@ -1,5 +1,5 @@
 structure Tree = struct
-  datatype 'a t = Leaf of 'a | Node of 'a t * 'a t
+  datatype 'a t = Leaf of 'a | Node of 'a t * 'a t | None
   type 'a path = Edge.edges * 'a
 
   fun ahead (edges, value) = (Edge.ahead edges, value)
@@ -7,6 +7,7 @@ structure Tree = struct
   fun make [(edges, value)] =
         if Edge.isDeadEnd edges then Leaf value
         else raise Fail "paths are not binary-branching"
+    | make [] = None
     | make paths =
         let
           fun split (path as (edges, _), (zero, one)) = 
