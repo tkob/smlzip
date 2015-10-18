@@ -120,6 +120,8 @@ end = struct
           construct (Array.tabulate (288, f))
         end
 
+  val fixedDist = construct (Array.array (30, 5))
+
   (* 3.2.4. Non-compressed blocks (BTYPE=00) *)
   fun readStored bitins =
         let
@@ -181,6 +183,7 @@ end = struct
     fun decodeDistance bitins =
           let
             val code = Word.toInt (BitIO.bits (bitins, 0w5))
+            (* val code = readLiteral fixedDist bitins *)
             val dist = Vector.sub (dist, code)
             val extraBits = Vector.sub (extraBits, code)
             val extra = BitIO.bits (bitins, extraBits)
