@@ -6,8 +6,6 @@ structure Deflate :> sig
   val fromBytes : Word8Vector.vector -> instream
   val input : instream -> Word8Vector.vector
   val endOfStream : instream -> bool
-  val construct : int array -> int Tree.t
-  val readLiteral : int Tree.t -> BitIO.instream -> int
 end = struct
   type buffer = Word8Vector.vector list
   type instream = { buf : buffer ref,
