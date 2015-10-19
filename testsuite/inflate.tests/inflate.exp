@@ -3,7 +3,7 @@
 # test for example/inflate
 
 proc dump {data} {
-    binary scan $data B* bits
+    binary scan $data b* bits
     return [regexp -all -inline ........ $bits]
 }
 
