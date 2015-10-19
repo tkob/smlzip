@@ -41,3 +41,4 @@ test_inflate "Stored 65536 bytes" [string repeat x 65536] 0
 test_inflate "aa" "aa" 1
 test_inflate "ab" "ab" 1
 test_inflate "aaaaa" "aaaaa" 1
+test_inflate "large bytes level 9" [string repeat abc 841] 9
