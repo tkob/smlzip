@@ -237,7 +237,7 @@ end = struct
   val order = Vector.fromList
     [ 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 ]
 
-  fun readTree (ins as {bitins, prev, ...}) =
+  fun readTree bitins =
         let
           val numLit = Word.toInt (BitIO.bits (bitins, 0w5)) + 257
           val numDist = Word.toInt (BitIO.bits (bitins, 0w5)) + 1
@@ -255,8 +255,51 @@ end = struct
                   end
           val _ = makeCodeLenCodes 0
           val tree = construct codeLenCodes
+          fun makeCodeLen (codeLen, n, limit, prev) =
+                if n >= limit then ()
+                else
+                  let
+                    val value = readLiteral tree bitins
+                  in
+                    if value < 16 then (
+                      Array.update (codeLen, n, value);
+                      makeCodeLen (codeLen, n + 1, limit, value))
+                    else if value = 16 then
+                      let
+                        val length = Word.toInt (BitIO.bits (bitins, 0w2)) + 3
+                        val src = Vector.tabulate (length, fn _ => prev)
+                      in
+                        Array.copyVec {src = src, dst = codeLen, di = n};
+                        makeCodeLen (codeLen, n + length, limit, prev)
+                      end
+                    else if value = 17 then
+                      let
+                        val length = Word.toInt (BitIO.bits (bitins, 0w3)) + 3
+                        val src = Vector.tabulate (length, fn _ => 0)
+                      in
+                        Array.copyVec {src = src, dst = codeLen, di = n};
+                        makeCodeLen (codeLen, n + length, limit, prev)
+                      end
+                    else if value = 18 then
+                      let
+                        val length = Word.toInt (BitIO.bits (bitins, 0w7)) + 11
+                        val src = Vector.tabulate (length, fn _ => 0)
+                      in
+                        Array.copyVec {src = src, dst = codeLen, di = n};
+                        makeCodeLen (codeLen, n + length, limit, prev)
+                      end
+                    else
+                      raise Fail ("invalid alphabet for code length: "
+                                  ^ Int.toString value)
+                  end
+          val lenCode = Array.array (numLit, 0)
+          val _ = makeCodeLen (lenCode, 0, numLit, 0)
+          val alphabetTree = construct lenCode
+          val distCode = Array.array (numDist, 0)
+          val _ = makeCodeLen (distCode, 0, numDist, 0)
+          val distTree = construct distCode
         in
-          raise Fail "unimplemented"
+          (alphabetTree, distTree)
         end
 
   (* 3.2.3. Details of block format *)
@@ -275,9 +318,9 @@ end = struct
                (* 10 - compressed with dynamic Huffman codes *)
              | 0w2 =>
                  let
-                   val tree = readTree ins
+                   val trees = readTree bitins
                  in
-                   buf := !buf @ [readCompressed tree ins]
+                   buf := !buf @ [readCompressed trees ins]
                  end
                (* 11 - reserved (error) *)
              | _ => raise Fail "invalid block type";
