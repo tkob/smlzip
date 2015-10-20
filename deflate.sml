@@ -117,6 +117,10 @@ end = struct
           construct (Array.tabulate (288, f))
         end
 
+  (* Distance codes 0-31 are represented by (fixed-length) 5-bit codes
+     ...
+     Note that distance codes 30-31 will never actually occur in the compressed
+     data. *)
   val fixedDist = construct (Array.array (30, 5))
 
   (* 3.2.4. Non-compressed blocks (BTYPE=00) *)
@@ -147,6 +151,7 @@ end = struct
           else readLiteral one bitins
         end
 
+  (* 3.2.5. Compressed blocks (length and distance codes) *)
   local
     val length = Vector.fromList
       [  3,   4,   5,   6,   7,   8,   9,  10,  11, 13,
@@ -168,6 +173,7 @@ end = struct
           end
   end
 
+  (* 3.2.5. Compressed blocks (length and distance codes) *)
   local
     val dist = Vector.fromList
       [   1,    2,    3,    4,    5,    7,     9,    13,    17,   25,
@@ -189,6 +195,7 @@ end = struct
           end
   end
 
+  (* 3.2.5. Compressed blocks (length and distance codes) *)
   fun readCompressed (alphabetTree, distTree) (ins as {bitins, prev, ...}) =
         let
           val segmentSize = 256
@@ -232,6 +239,7 @@ end = struct
           read []
         end
 
+  (* 3.2.7. Compression with dynamic Huffman codes (BTYPE=10) *)
   val order = Vector.fromList
     [ 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 ]
 
