@@ -6,7 +6,7 @@ structure Tree = struct
 
   fun make [(edges, value)] =
         if Edge.isDeadEnd edges then Leaf value
-        else raise Fail "paths are not binary-branching"
+        else raise Fail "not dead end at leaf"
     | make [] = None
     | make paths =
         let
