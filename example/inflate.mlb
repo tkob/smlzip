@@ -1,8 +1,3 @@
 $(SML_LIB)/basis/basis.mlb
-../bitio.sml
-../word8buffer.sml
-../word8ringbuffer.sml
-../edge.sml
-../tree.sml
-../deflate.sml
+../deflate.mlb
 inflate.sml
