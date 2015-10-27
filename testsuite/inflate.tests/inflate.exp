@@ -1,6 +1,6 @@
 # vim: set filetype=tcl :
 
-# test for example/inflate
+# test for example/inflate/inflate
 
 proc dump {data} {
     binary scan $data b* bits
@@ -18,7 +18,7 @@ proc test_inflate {test_name src_str level} {
         puts -nonewline $tempfile $deflated
         close $tempfile
     
-        if {[catch {exec $exampledir/inflate $tempfilename} inflated]} {
+        if {[catch {exec $exampledir/inflate/inflate $tempfilename} inflated]} {
             fail "$test_name execution failed: output=$inflated, input=[dump $deflated]\n"
             return
         }

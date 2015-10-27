@@ -1,12 +1,9 @@
-M4FLAGS = -DSML_COMPILER=mlton
+all: inflate/inflate
 
-all: inflate
+inflate/inflate:
+	cd inflate && make
 
-inflate: inflate.sml inflate.mlb
-	mlton inflate.mlb
-
-inflate.sml: inflate.sml.in
-	m4 $(M4FLAGS) $< > $@
+.PHONY: clean inflate/inflate
 
 clean:
-	rm -f inflate inflate.sml
+	cd inflate && make clean
