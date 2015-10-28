@@ -1,0 +1,37 @@
+structure Main = struct
+  fun main (name, arguments) =
+        let
+          val fileName = hd arguments
+          val files = Pkzip.openIn fileName
+        in
+          List.app (fn {fileName, ...} => print (fileName ^ "\n")) files;
+          OS.Process.success
+        end
+end
+
+ifelse(SML_COMPILER,`mlton', `define(`SML_MAIN_FUN')')
+ifelse(SML_COMPILER,`mlkit', `define(`SML_MAIN_FUN')')
+ifelse(SML_COMPILER,`poly', `define(`SML_MAIN_FUN')')
+ifelse(SML_COMPILER,`alice', `define(`SML_MAIN_FUN')')
+ifelse(SML_COMPILER,`mosml', `define(`SML_MAIN_FUN')')
+ifelse(SML_COMPILER,`smlsharp', `define(`SML_MAIN_FUN')')
+
+ifdef(`SML_MAIN_FUN',`
+fun main () =
+  let
+    val name = CommandLine.name ()
+    val arguments = CommandLine.arguments ()
+  in
+      OS.Process.exit (Main.main (name, arguments))
+  end
+')
+
+ifelse(SML_COMPILER,`mlton', `define(`SML_BOOT_VAL')')
+ifelse(SML_COMPILER,`mlkit', `define(`SML_BOOT_VAL')')
+ifelse(SML_COMPILER,`alice', `define(`SML_BOOT_VAL')')
+ifelse(SML_COMPILER,`mosml', `define(`SML_BOOT_VAL')')
+ifelse(SML_COMPILER,`smlsharp', `define(`SML_BOOT_VAL')')
+
+ifdef(`SML_BOOT_VAL',`
+val _ = main ()
+')
