@@ -46,7 +46,7 @@ structure Pkzip = struct
         parseIn ins (localFile::files)
       end
     else
-      files
+      rev files
   end
 
   fun openIn name =
