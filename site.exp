@@ -6,3 +6,4 @@ set srcdir [file normalize ./testsuite]
 set outdir [file normalize ./testsuite/log]
 
 set exampledir [file normalize ./example]
+set fixturedir [file normalize $srcdir/fixture]
