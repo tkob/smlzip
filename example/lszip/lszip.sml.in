@@ -3,8 +3,9 @@ structure Main = struct
         let
           val fileName = hd arguments
           val files = Pkzip.openIn fileName
+          fun println s = print (s ^ "\n")
         in
-          List.app (fn {fileName, ...} => print (fileName ^ "\n")) files;
+          List.app (println o #fileName) files;
           OS.Process.success
         end
 end
