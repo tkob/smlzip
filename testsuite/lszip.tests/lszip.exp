@@ -40,4 +40,6 @@ proc test_lszip {test_name zip_file_name} {
 }
 
 test_lszip "excel.xlsx" $fixturedir/excel.xlsx
+test_lszip "Java archive" $fixturedir/jar.jar
+test_lszip "Java archive (uncompressed)" $fixturedir/jar0.jar
 
