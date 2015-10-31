@@ -11,6 +11,7 @@ structure Pkzip = struct
             Word.orb (Word.<< (word, Word.fromInt 8),fromWord8ToWord byte))
           0w0
           vec
+  val b = Byte.stringToBytes
 
   fun readLocalFileHeader ins =
         let
@@ -44,7 +45,7 @@ structure Pkzip = struct
         let
           val s = BinIO.inputN (ins, 4)
         in
-          if s = Byte.stringToBytes "PK\003\004" then
+          if s = b "PK\003\004" then
             let val localFile = readLocalFileHeader ins in
               parseIn ins (localFile::files)
             end
