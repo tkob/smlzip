@@ -4,6 +4,7 @@ structure BinRandomAccessFile :> sig
   val read : infile * int -> Word8Vector.vector
   val tellIn : infile -> int
   val seekIn : infile * int -> unit
+  val lengthIn : infile -> int
   val closeIn : infile -> unit
 end = struct
   type infile = BinIO.StreamIO.reader
@@ -27,6 +28,10 @@ end = struct
   fun seekIn (BinPrimIO.RD {setPos = SOME setPos, ...}, pos) =
         setPos pos
     | seekIn _ = raise Fail "BinRandomAccessFile.seekIn not supported"
+
+  fun lengthIn (BinPrimIO.RD {endPos = SOME endPos, ...}) =
+        endPos ()
+    | lengthIn _ = raise Fail "BinRandomAccessFile.lengthIn not supported"
 
   fun closeIn (BinPrimIO.RD {close, ...}) = close ()
 end
