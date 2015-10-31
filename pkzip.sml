@@ -12,6 +12,7 @@ structure Pkzip = struct
           0w0
           vec
   val b = Byte.stringToBytes
+  val s = Byte.bytesToString
 
   fun readLocalFileHeader ins =
         let
