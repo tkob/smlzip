@@ -133,7 +133,6 @@ structure Pkzip = struct
           val num_of_disk_with_start_of_cd                = readInt2 infile
           val total_num_of_entries_in_cd_on_this_disk     = readInt2 infile
           val total_num_of_entries_in_cd                  = readInt2 infile
-          val _ = print (Int.toString total_num_of_entries_in_cd ^ "\n")
           val size_of_cd                                  = readInt4 infile
           val offset_of_start_of_cd_wrt_starting_disk_num = readInt4 infile
           val zip_file_comment_len                        = readInt2 infile
