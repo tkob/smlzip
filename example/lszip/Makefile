@@ -2,7 +2,7 @@ M4FLAGS = -DSML_COMPILER=mlton
 
 all: lszip
 
-lszip: lszip.sml lszip.mlb
+lszip: lszip.sml lszip.mlb ../../binrandomaccessfile.sml ../../seqmatch.sml ../../pkzip.sml
 	mlton lszip.mlb
 
 lszip.sml: lszip.sml.in
