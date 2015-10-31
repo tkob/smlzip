@@ -156,5 +156,7 @@ structure Pkzip = struct
           (infile, entries)
         end
 
+  fun entries (infile, entries) = entries
+
   fun closeIn (infile, _) = BinRandomAccessFile.closeIn infile
 end
