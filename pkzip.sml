@@ -7,9 +7,9 @@ structure Pkzip :> sig
     uncompressedSize : int,
     fileName : string,
     offset : int }
-  val openIn' : string -> pkzip
-  val entries : pkzip -> entry list
+  val openIn : string -> pkzip
   val closeIn : pkzip -> unit
+  val entries : pkzip -> entry list
 end = struct
   val fromWord8ToWord = Word.fromLarge o Word8.toLarge
   fun unpackInt vec =
@@ -52,25 +52,6 @@ end = struct
             uncompressedSize = uncompressedSize,
             fileName = fileName,
             fileData = fileData }
-        end
-
-  fun parseIn ins files =
-        let
-          val s = BinIO.inputN (ins, 4)
-        in
-          if s = b "PK\003\004" then
-            let val localFile = readLocalFileHeader ins in
-              parseIn ins (localFile::files)
-            end
-          else
-            rev files
-        end
-
-  fun openIn name =
-        let
-          val ins = BinIO.openIn name 
-        in
-          parseIn ins [] before BinIO.closeIn ins
         end
 
   type entry = {
@@ -168,7 +149,7 @@ end = struct
             entries
         end
 
-  fun openIn' fileName =
+  fun openIn fileName =
         let
           val infile = BinRandomAccessFile.openIn fileName
           val entries = locateEndOfCentralDirectory infile

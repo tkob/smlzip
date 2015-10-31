@@ -2,7 +2,7 @@ structure Main = struct
   fun main (name, arguments) =
         let
           val fileName = hd arguments
-          val pkzip = Pkzip.openIn' fileName
+          val pkzip = Pkzip.openIn fileName
           fun println s = print (s ^ "\n")
         in
           List.app (println o #fileName) (Pkzip.entries pkzip);
