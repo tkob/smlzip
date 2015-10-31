@@ -1,4 +1,16 @@
-structure Pkzip = struct
+structure Pkzip :> sig
+  type pkzip
+  type entry = {
+    flag : word,
+    method : int,
+    compressedSize : int,
+    uncompressedSize : int,
+    fileName : string,
+    offset : int }
+  val openIn' : string -> pkzip
+  val entries : pkzip -> entry list
+  val closeIn : pkzip -> unit
+end = struct
   val fromWord8ToWord = Word.fromLarge o Word8.toLarge
   fun unpackInt vec =
         Word8Vector.foldr
@@ -60,6 +72,16 @@ structure Pkzip = struct
         in
           parseIn ins [] before BinIO.closeIn ins
         end
+
+  type entry = {
+    flag : word,
+    method : int,
+    compressedSize : int,
+    uncompressedSize : int,
+    fileName : string,
+    offset : int }
+
+  type pkzip = BinRandomAccessFile.infile * entry list
 
   fun readInt2 infile = unpackInt (BinRandomAccessFile.read (infile, 2))
   fun readInt4 infile = unpackInt (BinRandomAccessFile.read (infile, 4))
