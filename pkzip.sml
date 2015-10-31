@@ -147,10 +147,9 @@ end = struct
           (* next, read ECD *)
           val _ = seekIn (infile, posEcd)
           val end_of_cd_signature                         = read (infile, 4)
-              val _  =
-                if end_of_cd_signature = b "PK\005\006"
-                then ()
-                else raise Fail "cannot locate end of central directory"
+          val _  =
+            if end_of_cd_signature = b "PK\005\006" then ()
+            else raise Fail "cannot locate end of central directory"
           val num_of_this_disk                            = readInt2 infile
           val num_of_disk_with_start_of_cd                = readInt2 infile
           val total_num_of_entries_in_cd_on_this_disk     = readInt2 infile
