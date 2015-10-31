@@ -2,9 +2,9 @@ structure BinRandomAccessFile :> sig
   type infile
   val openIn : string -> infile
   val read : infile * int -> Word8Vector.vector
-  val tellIn : infile -> int
-  val seekIn : infile * int -> unit
-  val lengthIn : infile -> int
+  val tellIn : infile -> Position.int
+  val seekIn : infile * Position.int -> unit
+  val endPosIn : infile -> Position.int
   val closeIn : infile -> unit
 end = struct
   type infile = BinIO.StreamIO.reader
@@ -29,9 +29,9 @@ end = struct
         setPos pos
     | seekIn _ = raise Fail "BinRandomAccessFile.seekIn not supported"
 
-  fun lengthIn (BinPrimIO.RD {endPos = SOME endPos, ...}) =
+  fun endPosIn (BinPrimIO.RD {endPos = SOME endPos, ...}) =
         endPos ()
-    | lengthIn _ = raise Fail "BinRandomAccessFile.lengthIn not supported"
+    | endPosIn _ = raise Fail "BinRandomAccessFile.lengthIn not supported"
 
   fun closeIn (BinPrimIO.RD {close, ...}) = close ()
 end
