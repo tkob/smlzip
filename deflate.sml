@@ -196,7 +196,9 @@ end = struct
   end
 
   (* 3.2.5. Compressed blocks (length and distance codes) *)
-  fun readCompressed (alphabetTree, distTree) (ins as {bitins, prev, ...}) =
+  fun readCompressed
+          (alphabetTree, distTree)
+          (ins as {bitins, prev, ...} : instream) =
         let
           val segmentSize = 256
           val segment = Word8Buffer.create segmentSize

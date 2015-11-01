@@ -193,7 +193,7 @@ end = struct
   fun findEntry ((_, entries : entry list), fileName) =
         let
           fun find [] = NONE
-            | find (entry::entries) =
+            | find ((entry : entry)::entries) =
                 if #fileName entry = fileName then SOME entry
                 else find entries
         in
