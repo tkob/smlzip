@@ -1,6 +1,4 @@
 $(SML_LIB)/basis/basis.mlb
 ../../deflate.mlb
-../../binrandomaccessfile.sml
-../../seqmatch.sml
-../../pkzip.sml
+../../pkzip.mlb
 catzip.sml

@@ -2,7 +2,7 @@ M4FLAGS = -DSML_COMPILER=mlton
 
 all: catzip
 
-catzip: catzip.sml catzip.mlb ../../binrandomaccessfile.sml ../../seqmatch.sml ../../deflate.sml ../../pkzip.sml
+catzip: catzip.sml catzip.mlb
 	mlton catzip.mlb
 
 catzip.sml: catzip.sml.in
