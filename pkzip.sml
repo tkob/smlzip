@@ -7,7 +7,7 @@ structure Pkzip :> sig
     compressedSize : int,
     uncompressedSize : int,
     fileName : string,
-    offset : int }
+    offset : Position.int }
   val openIn : string -> infile
   val closeIn : infile -> unit
   val entries : infile -> entry list
@@ -15,10 +15,16 @@ structure Pkzip :> sig
   val readEntry : infile * entry -> Word8Vector.vector
 end = struct
   val fromWord8ToWord = Word.fromLarge o Word8.toLarge
+  val fromWord8ToPos = Position.fromLarge o Word8.toLargeInt
   fun unpackInt vec =
         Word8Vector.foldr
           (fn (byte, int) => int * 0x100 + Word8.toInt byte)
           0
+          vec
+  fun unpackPos vec =
+        Word8Vector.foldr
+          (fn (byte, int) => int * (Position.fromInt 0x100) + fromWord8ToPos byte)
+          (Position.fromInt 0)
           vec
   fun unpackWord vec =
         Word8Vector.foldr
@@ -37,12 +43,13 @@ end = struct
     compressedSize : int,
     uncompressedSize : int,
     fileName : string,
-    offset : int }
+    offset : Position.int }
 
   type infile = BinRandomAccessFile.infile * entry list
 
   fun readInt2 infile = unpackInt (BinRandomAccessFile.read (infile, 2))
   fun readInt4 infile = unpackInt (BinRandomAccessFile.read (infile, 4))
+  fun readPos4 infile = unpackPos (BinRandomAccessFile.read (infile, 4))
   fun readWord2 infile = unpackWord (BinRandomAccessFile.read (infile, 2))
   fun readString (infile, n) = s (BinRandomAccessFile.read (infile, n))
   fun readMethod infile =
@@ -55,7 +62,7 @@ end = struct
   fun readLocalFileHeader (infile, {offset, ...} : entry) =
         let
           open BinRandomAccessFile
-          val _ = seekIn (infile, Position.fromInt offset)
+          val _ = seekIn (infile, offset)
           val version = read (infile, 2)
           val flag = readWord2 infile
           val encrypted = Word.andb (flag, 0wx0001) = 0wx0001
@@ -103,7 +110,7 @@ end = struct
             val disk_number_start               = readInt2 infile
             val internal_file_attributes        = read (infile, 2)
             val external_file_attributes        = read (infile, 4)
-            val relative_offset_of_local_header = readInt4 infile
+            val relative_offset_of_local_header = readPos4 infile
             val file_name = readString (infile, file_name_length)
             val extra_field = read (infile, extra_field_length)
             val file_comment = readString (infile, file_comment_length)
