@@ -1,4 +1,4 @@
-all: inflate/inflate lszip/lszip
+all: inflate/inflate lszip/lszip catzip/catzip
 
 inflate/inflate:
 	cd inflate && make
@@ -6,8 +6,12 @@ inflate/inflate:
 lszip/lszip:
 	cd lszip && make
 
-.PHONY: clean inflate/inflate lszip/lszip
+catzip/catzip:
+	cd catzip && make
+
+.PHONY: clean inflate/inflate lszip/lszip catzip/catzip
 
 clean:
 	cd inflate && make clean
 	cd lszip && make clean
+	cd catzip && make clean
