@@ -14,8 +14,24 @@ structure Pkzip :> sig
   val findEntry : infile * string -> entry option
   val readEntry : infile * entry -> Word8Vector.vector
 end = struct
+  datatype method = Stored | Deflated
+
+  type entry = {
+    flag : word,
+    method : method,
+    compressedSize : int,
+    uncompressedSize : int,
+    fileName : string,
+    offset : Position.int }
+
+  type infile = BinRandomAccessFile.infile * entry list
+
+  val b = Byte.stringToBytes
+  val s = Byte.bytesToString
+
   val fromWord8ToWord = Word.fromLarge o Word8.toLarge
   val fromWord8ToPos = Position.fromLarge o Word8.toLargeInt
+
   fun unpackInt vec =
         Word8Vector.foldr
           (fn (byte, int) => int * 0x100 + Word8.toInt byte)
@@ -32,20 +48,6 @@ end = struct
             Word.orb (Word.<< (word, Word.fromInt 8),fromWord8ToWord byte))
           0w0
           vec
-  val b = Byte.stringToBytes
-  val s = Byte.bytesToString
-
-  datatype method = Stored | Deflated
-
-  type entry = {
-    flag : word,
-    method : method,
-    compressedSize : int,
-    uncompressedSize : int,
-    fileName : string,
-    offset : Position.int }
-
-  type infile = BinRandomAccessFile.infile * entry list
 
   fun readInt2 infile = unpackInt (BinRandomAccessFile.read (infile, 2))
   fun readInt4 infile = unpackInt (BinRandomAccessFile.read (infile, 4))
