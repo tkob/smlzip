@@ -10,6 +10,8 @@ structure Pkzip :> sig
   val openIn : string -> infile
   val closeIn : infile -> unit
   val entries : infile -> entry list
+  val findEntry : infile * string -> entry option
+  val readEntry : infile * entry -> Word8Vector.vector
 end = struct
   val fromWord8ToWord = Word.fromLarge o Word8.toLarge
   fun unpackInt vec =
@@ -159,6 +161,19 @@ end = struct
         end
 
   fun entries (infile, entries) = entries
+
+  fun findEntry ((_, entries : entry list), fileName) =
+        let
+          fun find [] = NONE
+            | find (entry::entries) =
+                if #fileName entry = fileName then SOME entry
+                else find entries
+        in
+          find entries
+        end
+
+  fun readEntry (infile, entry) =
+        raise Fail "unimplemented"
 
   fun closeIn (infile, _) = BinRandomAccessFile.closeIn infile
 end
