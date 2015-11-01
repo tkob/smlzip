@@ -1,5 +1,5 @@
 structure Pkzip :> sig
-  type pkzip
+  type infile
   type entry = {
     flag : word,
     method : int,
@@ -7,9 +7,9 @@ structure Pkzip :> sig
     uncompressedSize : int,
     fileName : string,
     offset : int }
-  val openIn : string -> pkzip
-  val closeIn : pkzip -> unit
-  val entries : pkzip -> entry list
+  val openIn : string -> infile
+  val closeIn : infile -> unit
+  val entries : infile -> entry list
 end = struct
   val fromWord8ToWord = Word.fromLarge o Word8.toLarge
   fun unpackInt vec =
@@ -62,7 +62,7 @@ end = struct
     fileName : string,
     offset : int }
 
-  type pkzip = BinRandomAccessFile.infile * entry list
+  type infile = BinRandomAccessFile.infile * entry list
 
   fun readInt2 infile = unpackInt (BinRandomAccessFile.read (infile, 2))
   fun readInt4 infile = unpackInt (BinRandomAccessFile.read (infile, 4))
