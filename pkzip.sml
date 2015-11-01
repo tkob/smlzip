@@ -59,7 +59,7 @@ end = struct
            | m =>
                raise Fail ("Unsupported compression method: " ^ Int.toString m)
 
-  fun readLocalFileHeader ((infile, _), {offset, ...} : entry) =
+  fun readLocalFileHeader ((infile, _), {compressedSize, offset, ...} : entry) =
         let
           open BinRandomAccessFile
           val _ = seekIn (infile, offset)
@@ -74,8 +74,8 @@ end = struct
           val time                        = read (infile, 2)
           val date                        = read (infile, 2)
           val crc32                       = read (infile, 4)
-          val compressedSize              = readInt4 infile
-          val uncompressedSize            = readInt4 infile
+          val compressed_size             = readInt4 infile
+          val uncompressed_size           = readInt4 infile
           val fileNameLength              = readInt2 infile
           val extraFieldLength            = readInt2 infile
           val fileName                    = readString (infile, fileNameLength)
