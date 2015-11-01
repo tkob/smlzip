@@ -63,23 +63,23 @@ end = struct
         let
           open BinRandomAccessFile
           val _ = seekIn (infile, offset)
-          val version = read (infile, 2)
-          val flag = readWord2 infile
+          val version          = read (infile, 2)
+          val flag             = readWord2 infile
           val encrypted = Word.andb (flag, 0wx0001) = 0wx0001
           val hasDataDesc = Word.andb (flag, 0wx0008) = 0wx0001
           val _ = if hasDataDesc then raise Fail "data descriptor not supported"
                   else ()
-          val method = readMethod infile
-          val time = read (infile, 2)
-          val date = read (infile, 2)
-          val crc32 = read (infile, 4)
-          val compressedSize = readInt4 infile
+          val method           = readMethod infile
+          val time             = read (infile, 2)
+          val date             = read (infile, 2)
+          val crc32            = read (infile, 4)
+          val compressedSize   = readInt4 infile
           val uncompressedSize = readInt4 infile
-          val fileNameLength = readInt2 infile
+          val fileNameLength   = readInt2 infile
           val extraFieldLength = readInt2 infile
-          val fileName = readString (infile, fileNameLength)
-          val extraField = read (infile, extraFieldLength)
-          val fileData = read (infile, compressedSize)
+          val fileName         = readString (infile, fileNameLength)
+          val extraField       = read (infile, extraFieldLength)
+          val fileData         = read (infile, compressedSize)
         in
           fileData
         end
@@ -111,8 +111,8 @@ end = struct
             val internal_file_attributes        = read (infile, 2)
             val external_file_attributes        = read (infile, 4)
             val relative_offset_of_local_header = readPos4 infile
-            val file_name = readString (infile, file_name_length)
-            val extra_field = read (infile, extra_field_length)
+            val file_name    = readString (infile, file_name_length)
+            val extra_field  = read (infile, extra_field_length)
             val file_comment = readString (infile, file_comment_length)
             val entry = {
                   flag = general_purpose_bit_flag,
