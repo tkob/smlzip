@@ -151,11 +151,11 @@ end = struct
           val total_num_of_entries_in_cd_on_this_disk     = readInt2 infile
           val total_num_of_entries_in_cd                  = readInt2 infile
           val size_of_cd                                  = readInt4 infile
-          val offset_of_start_of_cd_wrt_starting_disk_num = readInt4 infile
+          val offset_of_start_of_cd_wrt_starting_disk_num = readPos4 infile
           val zip_file_comment_len                        = readInt2 infile
           val zip_file_comment = readString (infile, zip_file_comment_len)
           (* read entries in central directory *)
-          val _ = seekIn (infile, Position.fromInt offset_of_start_of_cd_wrt_starting_disk_num)
+          val _ = seekIn (infile, offset_of_start_of_cd_wrt_starting_disk_num)
           val entries = readCd (infile, posEcd, total_num_of_entries_in_cd, [])
         in
           if num_of_this_disk <> 0 orelse num_of_disk_with_start_of_cd <> 0 then
