@@ -82,7 +82,19 @@ end = struct
           val extraField                  = read (infile, extraFieldLength)
           val fileData                    = read (infile, compressedSize)
         in
-          fileData
+          case method of
+               Stored => fileData
+             | Deflated =>
+                 let
+                   val ins = Deflate.fromBytes fileData
+                   fun read vecs =
+                         if Deflate.endOfStream ins then
+                           Word8Vector.concat (rev vecs)
+                         else
+                           read (Deflate.input ins::vecs)
+                 in
+                   read []
+                 end
         end
 
   fun readCd (infile, posEcd, 0, entries) = rev entries
@@ -187,7 +199,7 @@ end = struct
         end
 
   fun readEntry (infile, entry) =
-        raise Fail "unimplemented"
+        readLocalFileHeader (infile, entry)
 
   fun closeIn (infile, _) = BinRandomAccessFile.closeIn infile
 end
