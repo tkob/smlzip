@@ -131,15 +131,15 @@ end = struct
           open Word8VectorMatch
           fun min (a, b) = if a < b then a else b
           (* first, locate ECD position (=> posEcd) *)
-          val len = Position.toInt (endPosIn infile)
+          val len = Position.toLarge (endPosIn infile)
           val bufSize = min (len, 65557)
           val bufPos = len - bufSize
-          val _ = seekIn (infile, Position.fromInt bufPos)
-          val buf = read (infile, bufSize)
+          val _ = seekIn (infile, Position.fromLarge bufPos)
+          val buf = read (infile, Int.fromLarge bufSize)
           val posEcd =
             case findLast {text = buf, pattern = b "PK\005\006"} of
                  NONE => raise Fail "not a PKZIP file"
-               | SOME posInBuf => Position.fromInt (bufPos + posInBuf)
+               | SOME posInBuf => Position.fromLarge (bufPos + Int.toLarge posInBuf)
           (* next, read ECD *)
           val _ = seekIn (infile, posEcd)
           val end_of_cd_signature                         = read (infile, 4)
