@@ -3,9 +3,9 @@ SMLZIP
 
 An SML library that provides access to compressed files in ZIP format.
 
-Status
-------
+Structures
+----------
 
-Decoding deflate data is supported.
+Pkzip structure provides access to PKZIP format.
 
-PKZIP support is in progress.
+Deflate structure is an implementation of Deflate (RFC 1951) decoder.
