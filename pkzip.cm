@@ -1,0 +1,11 @@
+Library
+  structure Pkzip
+is
+
+$/basis.cm
+
+deflate.cm
+
+binrandomaccessfile.sml
+seqmatch.sml
+pkzip.sml
