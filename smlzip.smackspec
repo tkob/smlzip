@@ -1,0 +1,5 @@
+provides: smlzip v0.1.0
+remote: git git://github.com/tkob/smlzip.git
+description: SMLZIP, provides access to compressed files in ZIP format
+bug-url: https://github.com/tkob/smlzip/issues
+license: MIT License
