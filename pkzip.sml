@@ -29,34 +29,6 @@ end = struct
   val b = Byte.stringToBytes
   val s = Byte.bytesToString
 
-  fun readLocalFileHeader ins =
-        let
-          val version = BinIO.inputN (ins, 2)
-          val flag = unpackWord (BinIO.inputN (ins, 2))
-          val encrypted = Word.andb (flag, 0wx0001) = 0wx0001
-          val hasDataDesc = Word.andb (flag, 0wx0008) = 0wx0001
-          val _ = if hasDataDesc then raise Fail "data descriptor not supported"
-                  else ()
-          val method = unpackInt (BinIO.inputN (ins, 2))
-          val time = BinIO.inputN (ins, 2)
-          val date = BinIO.inputN (ins, 2)
-          val crc32 = BinIO.inputN (ins, 4)
-          val compressedSize = unpackInt (BinIO.inputN (ins, 4))
-          val uncompressedSize = unpackInt (BinIO.inputN (ins, 4))
-          val fileNameLength = unpackInt (BinIO.inputN (ins, 2))
-          val extraFieldLength = unpackInt (BinIO.inputN (ins, 2))
-          val fileName = Byte.bytesToString (BinIO.inputN (ins, fileNameLength))
-          val extraField = BinIO.inputN (ins, extraFieldLength)
-          val fileData = BinIO.inputN (ins, compressedSize)
-        in
-          { flag = flag,
-            method = method,
-            compressedSize = compressedSize,
-            uncompressedSize = uncompressedSize,
-            fileName = fileName,
-            fileData = fileData }
-        end
-
   datatype method = Stored | Deflated
 
   type entry = {
@@ -79,6 +51,31 @@ end = struct
            | 8 => Deflated
            | m =>
                raise Fail ("Unsupported compression method: " ^ Int.toString m)
+
+  fun readLocalFileHeader (infile, {offset, ...} : entry) =
+        let
+          open BinRandomAccessFile
+          val _ = seekIn (infile, Position.fromInt offset)
+          val version = read (infile, 2)
+          val flag = readWord2 infile
+          val encrypted = Word.andb (flag, 0wx0001) = 0wx0001
+          val hasDataDesc = Word.andb (flag, 0wx0008) = 0wx0001
+          val _ = if hasDataDesc then raise Fail "data descriptor not supported"
+                  else ()
+          val method = readMethod infile
+          val time = read (infile, 2)
+          val date = read (infile, 2)
+          val crc32 = read (infile, 4)
+          val compressedSize = readInt4 infile
+          val uncompressedSize = readInt4 infile
+          val fileNameLength = readInt2 infile
+          val extraFieldLength = readInt2 infile
+          val fileName = readString (infile, fileNameLength)
+          val extraField = read (infile, extraFieldLength)
+          val fileData = read (infile, compressedSize)
+        in
+          fileData
+        end
 
   fun readCd (infile, posEcd, 0, entries) = rev entries
     | readCd (infile, posEcd, numEntries, entries) =
