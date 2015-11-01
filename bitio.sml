@@ -28,7 +28,13 @@ end = struct
       else
         SOME (Word8Vector.sub (bytes, !pos))
         before pos := !pos + 1
-    fun inputN n = raise Fail "unimplemented"
+    fun inputN n =
+          let
+            val slice = Word8VectorSlice.slice (bytes, !pos, SOME n)
+          in
+            Word8VectorSlice.vector slice
+            before pos := !pos + n
+          end
     fun endOfStream () = !pos >= Word8Vector.length bytes
   in
     (ref {buf = 0w0, size = 0w0}, input1, inputN, endOfStream)
