@@ -1,8 +1,9 @@
 structure Pkzip :> sig
   type infile
+  datatype method = Stored | Deflated
   type entry = {
     flag : word,
-    method : int,
+    method : method,
     compressedSize : int,
     uncompressedSize : int,
     fileName : string,
@@ -56,9 +57,11 @@ end = struct
             fileData = fileData }
         end
 
+  datatype method = Stored | Deflated
+
   type entry = {
     flag : word,
-    method : int,
+    method : method,
     compressedSize : int,
     uncompressedSize : int,
     fileName : string,
@@ -70,6 +73,12 @@ end = struct
   fun readInt4 infile = unpackInt (BinRandomAccessFile.read (infile, 4))
   fun readWord2 infile = unpackWord (BinRandomAccessFile.read (infile, 2))
   fun readString (infile, n) = s (BinRandomAccessFile.read (infile, n))
+  fun readMethod infile =
+        case readInt2 infile of
+             0 => Stored
+           | 8 => Deflated
+           | m =>
+               raise Fail ("Unsupported compression method: " ^ Int.toString m)
 
   fun readCd (infile, posEcd, 0, entries) = rev entries
     | readCd (infile, posEcd, numEntries, entries) =
@@ -85,7 +94,7 @@ end = struct
             val version_made_by                 = read (infile, 2)
             val version_needed_to_extract       = read (infile, 2)
             val general_purpose_bit_flag        = readWord2 infile
-            val compression_method              = readInt2 infile
+            val compression_method              = readMethod infile
             val last_mod_file_time              = read (infile, 2)
             val last_mod_file_date              = read (infile, 2)
             val crc32                           = read (infile, 4)
