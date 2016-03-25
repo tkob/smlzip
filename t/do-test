@@ -1,0 +1,3 @@
+#!/bin/sh
+
+exec rehearsal -command sml -ps1 '- ' -ps2 '= ' -timeout 30 "$@"

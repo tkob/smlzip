@@ -69,35 +69,3 @@ structure Word8VectorMatch = SeqMatch(
   val size = Word8Vector.length;
   val slice = fn (v, s, e) => Word8VectorSlice.slice (v, s, SOME e);
   val compare = Word8VectorSlice.collate Word8.compare)
-
-(* unit tests *)
-local open StringMatch in
-  val SOME 3 = findFirst {pattern = "abc", text = "aaaabcbcbcabcx"}
-  val SOME 0 = findFirst {pattern = "", text = "aaaabcbcbcabcx"}
-  val SOME 10 = findFirst {pattern = "abcx", text = "aaaabcbcbcabcx"}
-  val NONE = findFirst {pattern = "abc", text = ""}
-  val SOME 10 = findLast {pattern = "abc", text = "aaaabcbcbcabcx"}
-  val SOME 14 = findLast {pattern = "", text = "aaaabcbcbcabcx"}
-  val SOME 0 = findLast {pattern = "aaaa", text = "aaaabcbcbcabcx"}
-  val NONE = findLast {pattern = "abc", text = ""}
-  val [3, 10] = findAll {pattern = "abc", text = "aaaabcbcbcabcx"}
-  val [0, 1, 2] = findAll {pattern = "", text = "aa"}
-  val [] = findAll {pattern = "a", text = "b"}
-  val [0] = findAll {pattern = "", text = ""}
-end
-
-local open Word8VectorMatch in
-  val b = Byte.stringToBytes
-  val SOME 3 = findFirst {pattern = b "abc", text = b "aaaabcbcbcabcx"}
-  val SOME 0 = findFirst {pattern = b "", text = b "aaaabcbcbcabcx"}
-  val SOME 10 = findFirst {pattern = b "abcx", text = b "aaaabcbcbcabcx"}
-  val NONE = findFirst {pattern = b "abc", text = b ""}
-  val SOME 10 = findLast {pattern = b "abc", text = b "aaaabcbcbcabcx"}
-  val SOME 14 = findLast {pattern = b "", text = b "aaaabcbcbcabcx"}
-  val SOME 0 = findLast {pattern = b "aaaa", text = b "aaaabcbcbcabcx"}
-  val NONE = findLast {pattern = b "abc", text = b ""}
-  val [3, 10] = findAll {pattern = b "abc", text = b "aaaabcbcbcabcx"}
-  val [0, 1, 2] = findAll {pattern = b "", text = b "aa"}
-  val [] = findAll {pattern = b "a", text = b "b"}
-  val [0] = findAll {pattern = b "", text = b ""}
-end
