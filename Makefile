@@ -1,8 +1,8 @@
 all: check
 
-check: example/inflate t/seqmatch.t
+check: example/inflate t/seqmatch.t t/pkzip.t
 	runtest
-	t/do-test t/seqmatch.t
+	t/do-test t/seqmatch.t t/pkzip.t
 
 example/inflate:
 	cd example && make
