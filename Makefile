@@ -2,7 +2,7 @@ all: check
 
 check: example/inflate t/seqmatch.t t/pkzip.t
 	runtest
-	t/do-test t/seqmatch.t t/pkzip.t
+	prove --exec t/do-test
 
 example/inflate:
 	cd example && make
